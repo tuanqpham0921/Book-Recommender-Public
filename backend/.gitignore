@@ -10,18 +10,3 @@ venv/
 logs/
 *.csv
 examples/
-
-# Docker volumes
-postgres_data/
-redis_data/
-
-Caddyfile*
-*.sh
-*.yml
-*.examples
-*.json
-app/prompts
-.env*
-scripts/
-Makefile
-data/

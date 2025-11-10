@@ -95,7 +95,7 @@ function ChatBot() {
                     break;
                 }
 
-                // 🔴 ERROR HANDLING
+                // ERROR HANDLING
                 if (event.type === 'error') {
                     console.error('Error in handleSendMessage:', event.data);
                     setTurn(draft => {
@@ -124,7 +124,7 @@ function ChatBot() {
                     });
                 }
 
-                /// 🟢 TEXT (streaming text deltas)
+                /// TEXT (streaming text deltas)
                 if (event.type === 'content.delta') {
                     setTurn(draft => {
                         const last = draft[draft.length - 1];
@@ -147,7 +147,7 @@ function ChatBot() {
                     continue;
                 }
 
-                // 📘 BOOK CARD EVENTS
+                // BOOK CARD EVENTS
                 if (event.type === 'book_card') {
                     setTurn(draft => {
                         const last = draft[draft.length - 1];
@@ -170,7 +170,7 @@ function ChatBot() {
                     continue;
                 }
 
-                // 🧭 MERMAID DIAGRAM EVENTS
+                // MERMAID DIAGRAM EVENTS
                 if (event.type === 'mermaid.diagram') {
                     setTurn(draft => {
                         const last = draft[draft.length - 1];

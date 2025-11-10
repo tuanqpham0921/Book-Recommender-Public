@@ -12,7 +12,7 @@ const NavBar = () => {
         { icon: Briefcase, label: 'Portfolio', href: 'https://www.tuanqpham0921.com', external: false },
         { icon: Linkedin, label: 'LinkedIn', href: 'https://linkedin.com/in/tuanqpham0921', external: true },
         { icon: Github, label: 'GitHub', href: 'https://github.com/tuanqpham0921', external: true },
-        { icon: FileText, label: 'Resume', href: '/resume', external: false }
+        // { icon: FileText, label: 'Resume', href: '/resume', external: false }
     ];
 
     return (

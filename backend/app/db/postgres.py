@@ -37,7 +37,7 @@ async def close_postgres(pool):
     """Close global Postgres pool."""
     if pool:
         await pool.close()
-        logger.info("🛑 Postgres closed")
+        logger.info("Postgres closed")
 
 
 async def clear_postgres_db(pool):
@@ -45,7 +45,7 @@ async def clear_postgres_db(pool):
     if pool is None:
         raise RuntimeError("Postgres pool is not initialized")
 
-    async with pool.acquire() as conn:  # ✅ borrow from pool
+    async with pool.acquire() as conn:
         try:
             await conn.execute("DROP TABLE IF EXISTS books;")
             logger.info("PostgreSQL database cleared successfully")
@@ -61,7 +61,7 @@ async def setup_postgres_db(pool):
 
     async with pool.acquire() as conn:
         try:
-            async with conn.transaction():  # ✅ all-or-nothing
+            async with conn.transaction():
                 await conn.execute("DROP TABLE IF EXISTS books;")
                 await conn.execute(
                     f"""
@@ -98,7 +98,7 @@ async def setup_postgres_db(pool):
                     WITH (lists = 100);
                 """
                 )
-            logger.info("✅ PostgreSQL database setup completed successfully!")
+            logger.info("PostgreSQL database setup completed successfully!")
         except Exception as e:
-            logger.error(f"❌ Error setting up database: {e}")
+            logger.error(f"Error setting up database: {e}")
             raise

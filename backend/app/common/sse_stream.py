@@ -28,13 +28,10 @@ class SSEStream:
                 raise StopAsyncIteration
             return ServerSentEvent(data=data)
         except asyncio.TimeoutError:
-            logger.warning("⏰ SSE stream timeout")
-            # Don't call send_error here to avoid recursion
+            logger.warning("SSE stream timeout")
             raise StopAsyncIteration
         except Exception as e:
-            logger.exception(
-                f"❌ SSE stream error: {e}"
-            )  # Use exception() for full traceback
+            logger.exception(f"SSE stream error: {e}")
             raise StopAsyncIteration
 
     async def send_json(self, data):
@@ -43,16 +40,16 @@ class SSEStream:
             if not self._finished:
                 await self._queue.put(json.dumps(data))
         except Exception as e:
-            logger.exception(f"❌ Error sending JSON data: {e}")
+            logger.exception(f"Error sending JSON data: {e}")
 
     async def send(self, type: str = "content.delta", data: str = ""):
         """Send a typed message."""
         try:
             if not self._finished:
                 await self._queue.put(json.dumps({"type": type, "data": data}))
-                logger.debug(f"📡 SSE sent: {type}")
+                logger.debug(f"SSE sent: {type}")
         except Exception as e:
-            logger.exception(f"❌ Error sending SSE message: {e}")
+            logger.exception(f"Error sending SSE message: {e}")
 
     async def send_event(self, event_type: str, data: Dict[str, Any]):
         """Send an SSE event with structured data."""
@@ -85,7 +82,6 @@ class SSEStream:
             await self.send(type="ui.loading", data=text)
         except Exception as e:
             logger.exception(f"❌ Error in send_ui_loading: {e}")
-
 
     async def send_error(self, text: str):
         """Send error message."""

@@ -29,7 +29,7 @@ async def init_sqlalchemy():
             )
 
         logger.info(
-            f"🔗 Connecting to SQLAlchemy: {settings.postgres.sqlalchemy_url.replace(settings.postgres.PASSWORD, '***')}"
+            f"Connecting to SQLAlchemy: {settings.postgres.sqlalchemy_url.replace(settings.postgres.PASSWORD, '***')}"
         )
 
         # Create async engine with connection pooling
@@ -39,10 +39,9 @@ async def init_sqlalchemy():
             pool_size=settings.postgres.MIN_CONNECTIONS,
             max_overflow=settings.postgres.MAX_CONNECTIONS
             - settings.postgres.MIN_CONNECTIONS,
-            pool_pre_ping=True,  # Validate connections before use
-            pool_recycle=1800,  # Recycle connections every 30 minutes (Cloud SQL friendly)
-            pool_timeout=60,  # Wait up to 60 seconds for a connection
-            # echo=settings.debug, # Log SQL queries in debug mode
+            pool_pre_ping=True,
+            pool_recycle=1800,
+            pool_timeout=60,
             connect_args=connect_args,
         )
 
@@ -50,11 +49,11 @@ async def init_sqlalchemy():
         async with _sqlalchemy_engine.begin() as conn:
             # Test connection
             await conn.execute(text("SELECT 1"))
-            logger.info("✅ Database connection test successful")
+            logger.info("Database connection test successful")
 
             # Enable pgvector extension
             await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
-            logger.info("✅ pgvector extension enabled")
+            logger.info("pgvector extension enabled")
 
             # Import models to ensure they're registered
             from app.domains.books.models import BookModel, Base
@@ -77,16 +76,16 @@ async def init_sqlalchemy():
                 table_exists = result.scalar()
 
                 if table_exists:
-                    logger.info("✅ Books table already exists")
+                    logger.info("Books table already exists")
                 else:
                     logger.info(
-                        "⚠️ Books table not found - this is expected if using direct asyncpg setup"
+                        "Books table not found - this is expected if using direct asyncpg setup"
                     )
 
             except Exception as e:
-                logger.warning(f"⚠️ Could not check table existence: {e}")
+                logger.warning(f"Could not check table existence: {e}")
 
-        logger.info("✅ SQLAlchemy engine initialized successfully")
+        logger.info("SQLAlchemy engine initialized successfully")
 
         # Create session factory
         _sqlalchemy_session_factory = async_sessionmaker(
@@ -98,7 +97,7 @@ async def init_sqlalchemy():
         return _sqlalchemy_engine, _sqlalchemy_session_factory
 
     except Exception as e:
-        logger.error(f"❌ SQLAlchemy initialization failed: {e}")
+        logger.error(f"SQLAlchemy initialization failed: {e}")
         logger.error(
             f"   Database URL: {settings.postgres.sqlalchemy_url.replace(settings.postgres.PASSWORD, '***')}"
         )
@@ -110,4 +109,4 @@ async def close(_sqlalchemy_engine):
 
     if _sqlalchemy_engine:
         await _sqlalchemy_engine.dispose()
-        logger.info("🛑 SQLAlchemy engine disposed")
+        logger.info("SQLAlchemy engine disposed")

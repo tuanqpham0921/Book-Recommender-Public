@@ -1,13 +1,13 @@
-# 📚 Book Recommender System
+# Book Recommender System
 
 An AI-powered book recommendation system that combines **Large Language Models (LLMs)** with **embedding-based similarity search** to help users discover books through semantic understanding, mood-based queries, and thematic exploration.
 
-**🌐 [Live Demo](https://book-recommender-tuanqpham0921.web.app/)** | **📝 [Blog](https://book-recommender-tuanqpham0921.web.app/blog)**
+**[Live Demo](https://book-recommender-tuanqpham0921.web.app/)** | **[Blog](https://book-recommender-tuanqpham0921.web.app/blog)**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ---
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -54,8 +54,9 @@ npm install
 
 # Run the frontend
 npm run dev
+```
 
-## 🐳 Docker Deployment
+## Docker Deployment
 
 ### Local Development
 
@@ -80,7 +81,7 @@ The Cloud Run configuration is optimized for:
 
 ---
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 ### Backend
 - **Framework**: FastAPI 0.115+
@@ -105,7 +106,7 @@ The Cloud Run configuration is optimized for:
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 Book-Recommender-Public/
@@ -138,27 +139,27 @@ Book-Recommender-Public/
 
 ---
 
-## 🎨 Features
+## Features
 
 ### Current Features
-- ✅ Natural language book search
-- ✅ Semantic similarity recommendations
-- ✅ Mood and theme-based queries
-- ✅ Book comparison and analysis
-- ✅ Real-time streaming responses
-- ✅ Interactive chat interface
-- ✅ Task visualization with Mermaid diagrams
+- Natural language book search
+- Semantic similarity recommendations
+- Mood and theme-based queries
+- Book comparison and analysis
+- Real-time streaming responses
+- Interactive chat interface
+- Task visualization with Mermaid diagrams
 
 ### Planned Features
-- 🔄 User reading history tracking
-- 🔄 Personalized recommendation tuning
-- 🔄 Community ratings integration
-- 🔄 Advanced filtering options
-- 🔄 Reading list management
+- User reading history tracking
+- Personalized recommendation tuning
+- Community ratings integration
+- Advanced filtering options
+- Reading list management
 
 ---
 
-## 📝 Example Queries
+## Example Queries
 
 ```
 "Find horror novels similar to It by Stephen King"
@@ -172,7 +173,7 @@ Book-Recommender-Public/
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 This is a public release of a personal project. Feedback and suggestions are welcome!
 
@@ -180,7 +181,7 @@ This is a public release of a personal project. Feedback and suggestions are wel
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 

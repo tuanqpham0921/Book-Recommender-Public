@@ -78,13 +78,12 @@ function ChatBot() {
             stream = await api.sendChatMessage(sessionIdOrNew, trimmedMessage, abortController.signal);
 
             for await (const event of parseSSEStream(stream)) {
-                // Check if request was aborted
                 if (abortController.signal.aborted) {
                     console.log('Stream aborted by controller');
                     break;
                 }
 
-                console.log("🔗 event: ", event.type);
+                console.log("event: ", event.type);
 
                 if (event.type === 'step.complete') {
                     setTurn(draft => {
@@ -117,7 +116,6 @@ function ChatBot() {
                     break;
                 }
 
-                /// 🔄 Loading message
                 if (event.type === 'ui.loading') {
                     setTurn(draft => {
                         draft[draft.length - 1].response.loadingText = event.data || 'Thinking...';
@@ -254,26 +252,26 @@ function ChatBot() {
 
     return (
         <div className="flex flex-col h-full w-full min-w-0 min-h-0">
-                <div className="flex-1 min-h-0 min-w-0 overflow-hidden pl-3 mr-3">
-                    {turn.length === 0 ? (
-                        <div className="h-full w-full flex items-center justify-center text-gray-800 italic text-2xl">
-                            What are you in the mood to read today?
-                        </div>
-                    ) : (
-                        <ChatMessages
-                            messages={turn}
-                            isStreaming={isStreaming}
-                        />
-                    )}
-                </div>
-                <div className="flex-shrink-0 min-w-0">
-                    <ChatInput
-                        newMessage={newMessage}
+            <div className="flex-1 min-h-0 min-w-0 overflow-hidden pl-3 mr-3">
+                {turn.length === 0 ? (
+                    <div className="h-full w-full flex items-center justify-center text-gray-800 italic text-2xl">
+                        What are you in the mood to read today?
+                    </div>
+                ) : (
+                    <ChatMessages
+                        messages={turn}
                         isStreaming={isStreaming}
-                        setNewMessage={setNewMessage}
-                        onSendMessage={handleSendMessage}
                     />
-                </div>
+                )}
+            </div>
+            <div className="flex-shrink-0 min-w-0">
+                <ChatInput
+                    newMessage={newMessage}
+                    isStreaming={isStreaming}
+                    setNewMessage={setNewMessage}
+                    onSendMessage={handleSendMessage}
+                />
+            </div>
         </div>
     )
 }

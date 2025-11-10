@@ -231,9 +231,7 @@ async def embed_and_store_books(books, batch_size=10):
                     pbar.update(len(batch))
                     continue
 
-        print(
-            f"\n✅ Successfully embedded and stored {total_embedded}/{len(books)} books"
-        )
+        print(f"\nSuccessfully embedded and stored {total_embedded}/{len(books)} books")
 
     except Exception as e:
         print(f"Error during book embedding and storage: {e}")

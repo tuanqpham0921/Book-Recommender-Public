@@ -66,7 +66,7 @@ async def detailed_health_check(request: Request):
             result = await conn.execute(text("SELECT 1 as test"))
             test_value = result.scalar()
             if test_value == 1:
-                logger.info("✅ SQLAlchemy connection test passed")
+                logger.info("SQLAlchemy connection test passed")
 
     if (
         health.openai

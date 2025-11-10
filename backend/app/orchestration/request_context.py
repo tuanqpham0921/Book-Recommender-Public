@@ -177,9 +177,9 @@ def get_complete_conversation_turns(all_messages, last_n_users=3):
         # This ensures we get complete conversation turns
         result_messages = all_messages[start_idx:]
         logger.info(
-            f"🎯 Selected {len(result_messages)} messages starting from index {start_idx} (found {user_count} user messages)"
+            f"Selected {len(result_messages)} messages starting from index {start_idx} (found {user_count} user messages)"
         )
         return result_messages
     except Exception as e:
-        logger.error(f"❌ Error processing conversation turns: {e}")
+        logger.error(f"Error processing conversation turns: {e}")
         return []

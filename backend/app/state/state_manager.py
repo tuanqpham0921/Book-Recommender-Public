@@ -33,9 +33,9 @@ class StateManager:
             num_added = await self.conversations.add_messages(
                 session_id, [m.model_dump_json() for m in messages]
             )
-            logger.info(f"➕ Persisted {num_added} messages for session {session_id}")
+            logger.info(f"Persisted {num_added} messages for session {session_id}")
         except Exception as e:
-            logger.error(f"❌ Failed to persist messages for session {session_id}: {e}")
+            logger.error(f"Failed to persist messages for session {session_id}: {e}")
 
     async def get_chat_history(self, session_id: str) -> List[APIMessage]:
         """Retrieve all conversation messages."""
@@ -44,7 +44,7 @@ class StateManager:
             return redis_chat_deserialization(conversation_history)
         except Exception as e:
             logger.error(
-                f"❌ Failed to retrieve conversation history for session {session_id}: {e}"
+                f"Failed to retrieve conversation history for session {session_id}: {e}"
             )
             return []
 
@@ -61,7 +61,7 @@ class StateManager:
         try:
             messages = await self.get_chat_history(session_id)
         except Exception as e:
-            logger.warning(f"⚠️ Failed to load messages for session {session_id}: {e}")
+            logger.warning(f"Failed to load messages for session {session_id}: {e}")
 
         # Build snapshot, tolerate missing sub-states
         snapshot = SessionState(
@@ -71,7 +71,7 @@ class StateManager:
             conversation_history=messages,
         )
 
-        logger.debug(f"📋 Snapshot built for session {session_id}")
+        logger.debug(f"Snapshot built for session {session_id}")
         return snapshot
 
     async def export_snapshot(

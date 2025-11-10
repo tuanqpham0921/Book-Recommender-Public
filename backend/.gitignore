@@ -1,0 +1,27 @@
+__pycache__/
+venv/
+.venv/
+.env/
+.env
+.env.*
+!.env.example
+!.env.production
+.vscode/
+logs/
+*.csv
+examples/
+
+# Docker volumes
+postgres_data/
+redis_data/
+
+Caddyfile*
+*.sh
+*.yml
+*.examples
+*.json
+app/prompts
+.env*
+scripts/
+Makefile
+data/

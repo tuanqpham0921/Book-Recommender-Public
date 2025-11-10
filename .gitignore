@@ -1,0 +1,21 @@
+__pycache__/
+venv/
+.venv/
+.env/
+.env
+.env.*
+!.env.example
+env-vars.yaml
+.vscode/
+logs/
+*archive/
+*.csv
+examples/
+*.cache
+
+# Firebase
+.firebase/
+firebase-debug.log
+firebase-debug.*.log
+
+*env*

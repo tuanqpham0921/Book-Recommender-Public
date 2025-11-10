@@ -1,0 +1,843 @@
+/* Tailwind import a lot of pre-built CSS rules */
+@import 'tailwindcss';
+
+/* GitHub Markdown CSS - loaded after Tailwind to override resets */
+@import 'github-markdown-css/github-markdown.css';
+
+/* Custom markdown styles matching project design system */
+.markdown-body {
+  font-family: var(--font-sans);
+  color: var(--text-hover);
+  line-height: 1.75;
+  max-width: none;
+  background-color: transparent;
+}
+
+/* Headings - matching your project's hierarchy */
+.markdown-body h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--text-active);
+  margin: 2rem 0 1.5rem 0;
+  border-bottom: 2px solid var(--border-light);
+  padding-bottom: 0.5rem;
+}
+
+.markdown-body h2 {
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--text-active);
+  margin: 2rem 0 1rem 0;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid var(--border-dark);
+}
+
+.markdown-body h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-active);
+  margin: 1.5rem 0 0.75rem 0;
+}
+
+.markdown-body h4 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-hover);
+  margin: 1.25rem 0 0.5rem 0;
+}
+
+/* Paragraphs - matching your blog content styles */
+.markdown-body p {
+  margin: 1.5rem 0;
+  font-size: 1.125rem;
+  color: var(--text-hover);
+  line-height: 1.75;
+}
+
+/* Lists - with proper bullet points */
+.markdown-body ul {
+  list-style: none;
+  margin: 1.5rem 0;
+  padding-left: 0;
+}
+
+.markdown-body ul li {
+  position: relative;
+  margin: 0.75rem 0;
+  padding-left: 1.5rem;
+  font-size: 1.125rem;
+  color: var(--text-hover);
+  line-height: 1.75;
+}
+
+.markdown-body ul li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: var(--text-active);
+  font-weight: 600;
+}
+
+.markdown-body ol {
+  margin: 1.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.markdown-body ol li {
+  margin: 0.75rem 0;
+  font-size: 1.125rem;
+  color: var(--text-hover);
+  line-height: 1.75;
+}
+
+/* Strong/Bold text */
+.markdown-body strong {
+  font-weight: 700;
+  color: var(--text-active);
+}
+
+/* Italic text */
+.markdown-body em {
+  font-style: italic;
+  color: var(--text-hover);
+}
+
+/* Code - inline */
+.markdown-body code {
+  background-color: var(--bg-secondary);
+  color: var(--text-active);
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.25rem;
+  font-size: 0.9em;
+  font-family: 'Monaco', 'Menlo', monospace;
+  border: 1px solid var(--border-light);
+}
+
+/* Horizontal rules */
+.markdown-body hr {
+  height: 1px;
+  background-color: var(--border-light);
+  border: none;
+  margin: 3rem 0;
+}
+
+/* Blockquotes */
+.markdown-body blockquote {
+  border-left: 4px solid var(--border-medium);
+  padding-left: 1rem;
+  margin: 1.5rem 0;
+  background-color: var(--bg-secondary);
+  padding: 1rem 1rem 1rem 1.5rem;
+  border-radius: 0 0.5rem 0.5rem 0;
+}
+
+.markdown-body blockquote p {
+  font-style: italic;
+  color: var(--text-inactive);
+  margin: 0;
+}
+
+/* Links */
+.markdown-body a {
+  color: var(--text-active);
+  text-decoration: underline;
+  text-decoration-color: var(--underline-primary);
+  transition: color 0.2s ease;
+}
+
+.markdown-body a:hover {
+  color: var(--text-hover);
+  text-decoration-color: var(--underline-secondary);
+}
+
+/* Mobile responsive */
+@media (width < 640px) {
+  .markdown-body h1 {
+    font-size: 2rem;
+  }
+
+  .markdown-body h2 {
+    font-size: 1.75rem;
+  }
+
+  .markdown-body h3 {
+    font-size: 1.375rem;
+  }
+
+  .markdown-body p,
+  .markdown-body li {
+    font-size: 1rem;
+    margin: 1.25rem 0;
+  }
+}
+
+/* Universal Box Sizing Reset (safe, good practive) */
+* {
+  box-sizing: border-box;
+}
+
+@theme {
+  --animate-slide-up: slide-up 0.6s ease-out;
+  --animate-slide-up-smooth: slide-up-smooth 0.35s ease-out;
+  --font-*: initial;
+  --font-sans: "Times New Roman", Times, serif;
+  --font-urbanist: "Times New Roman", Times, serif;
+
+  /* Design System Colors - Black/White/Gray Palette */
+  --text-inactive: rgb(115, 115, 115);
+  /* gray-500 */
+  --text-hover: rgb(64, 64, 64);
+  /* gray-700 */
+  --text-active: rgb(0, 0, 0);
+  /* black */
+  --text-muted: rgb(163, 163, 163);
+  /* gray-400 for nav links */
+
+  --underline-primary: rgb(0, 0, 0);
+  /* black for buttons */
+  --underline-secondary: rgb(163, 163, 163);
+  /* gray-400 for nav */
+
+  /* Background Colors */
+  --bg-primary: rgb(255, 255, 255);
+  /* white */
+  --bg-secondary: rgb(248, 248, 248);
+  /* gray-50 */
+  --bg-tertiary: rgb(229, 229, 229);
+  /* gray-200 */
+  --bg-quaternary: rgb(156, 163, 175);
+  /* gray-400 - darker gray */
+  --bg-dark: rgb(23, 23, 23);
+  /* gray-900 */
+
+  /* Border Colors */
+  --border-light: rgb(229, 229, 229);
+  /* gray-200 */
+  --border-medium: rgb(163, 163, 163);
+  /* gray-400 */
+  --border-dark: rgb(64, 64, 64);
+  /* gray-700 */
+
+  /* Button Colors */
+  --btn-primary-bg: rgb(0, 0, 0);
+  /* black */
+  --btn-primary-hover: rgb(64, 64, 64);
+  /* gray-700 */
+  --btn-secondary-bg: rgb(255, 255, 255);
+  /* white */
+  --btn-secondary-border: rgb(229, 229, 229);
+  /* gray-200 */
+  --btn-secondary-hover: rgb(248, 248, 248);
+  /* gray-50 */
+
+  /* Shadow System - Systematic Elevation */
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  /* Subtle border-like */
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  /* Small cards */
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  /* Standard cards */
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  /* Raised elements */
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  /* Floating elements */
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  /* Modal/overlay */
+
+  /* Interactive Shadows - For hover/focus states */
+  --shadow-button-hover: 0 4px 12px rgba(0, 0, 0, 0.1);
+  /* Button hover */
+  --shadow-icon-glow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  /* Icon backgrounds */
+  --shadow-input-focus: 0 0 0 3px rgba(0, 0, 0, 0.1);
+  /* Focus rings */
+
+  /* Page Transition System */
+  --transition-page-fast: transform 350ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  --transition-page-normal: transform 600ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --transition-page-slow: transform 800ms cubic-bezier(0.23, 1, 0.32, 1);
+  --transition-page-elegant: transform 750ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Custom keyframes */
+/* @keyframes: Define HOW to animate */
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+    /* Opacity: how transparent or see-through an element is in your UI*/
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up-smooth {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.loading-wrapper {
+  max-width: 90%;
+  padding: 8px 12px;
+  word-break: break-words;
+  margin-left: 10px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  /* matches Tailwind gap-2 */
+  color: #4b5563;
+  /* Tailwind gray-500 */
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.loading-spinner {
+  width: 1.25rem;
+  /* h-4 */
+  height: 1.25rem;
+  /* w-4 */
+  border: 2px solid #6b7280;
+  ;
+  /* gray-400 */
+  border-top-color: transparent;
+  /* border-t-transparent */
+  border-radius: 90%;
+  display: inline-block;
+  box-sizing: border-box;
+  animation: spin 2s linear infinite;
+  /* animate-spin */
+  flex-shrink: 0;
+  /* prevent shrinking */
+  margin-top: 1px;
+}
+
+.loading-text {
+  font-size: 1rem;
+  align-self: flex-start;
+  /* for flex */
+  justify-self: start;
+  /* for grid */
+}
+
+/* Spinner rotation */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Pulse effect (like Tailwind animate-pulse) */
+@keyframes pulse {
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Custom animation classes */
+.animate-slide-up {
+  animation: slide-up 0.6s ease-out;
+}
+
+.animate-slide-up-smooth {
+  animation: slide-up-smooth 0.35s ease-out;
+}
+
+/* Shadow Utilities */
+.shadow-xs {
+  box-shadow: var(--shadow-xs);
+}
+
+.shadow-sm {
+  box-shadow: var(--shadow-sm);
+}
+
+.shadow-md {
+  box-shadow: var(--shadow-md);
+}
+
+.shadow-lg {
+  box-shadow: var(--shadow-lg);
+}
+
+.shadow-xl {
+  box-shadow: var(--shadow-xl);
+}
+
+.shadow-2xl {
+  box-shadow: var(--shadow-2xl);
+}
+
+.shadow-button-hover {
+  box-shadow: var(--shadow-button-hover);
+}
+
+.shadow-icon-glow {
+  box-shadow: var(--shadow-icon-glow);
+}
+
+.shadow-input-focus {
+  box-shadow: var(--shadow-input-focus);
+}
+
+/* Unified Design System Classes */
+
+/* Underline Animation System - Tailwind v4 Style */
+@utility underline-animated {
+  position: relative;
+  font-weight: 500;
+  transition: all 0.2s ease;
+
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    transition: all 0.3s ease-out;
+  }
+}
+
+@utility underline-button {
+  margin-bottom: 0.25rem;
+  color: var(--text-inactive);
+
+  &::after {
+    bottom: -4px;
+    border-radius: 9999px;
+    transform-origin: left;
+    background-color: var(--underline-primary);
+    transform: scaleX(0);
+    transition-property: transform;
+  }
+
+  &.active {
+    color: var(--text-active);
+
+    &::after {
+      transform: scaleX(1);
+    }
+  }
+
+  &:not(.active):hover {
+    color: var(--text-hover);
+
+    &::after {
+      transform: scaleX(1);
+    }
+  }
+}
+
+@utility underline-link {
+  color: var(--text-active);
+
+  &::after {
+    bottom: 0;
+    background-color: var(--underline-primary);
+    width: 0;
+    transition-property: width;
+  }
+
+  &:hover {
+
+    &::after {
+      width: 100%;
+    }
+  }
+}
+
+/* Chat Component Utilities - Tailwind v4 Style */
+@utility send-button {
+  position: relative;
+  right: 8px;
+  bottom: 8px;
+  background-color: var(--btn-primary-bg);
+  color: var(--bg-primary);
+  border-radius: 9999px;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: var(--btn-primary-hover);
+  }
+}
+
+@utility blog-container {
+  overflow-y: auto;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  background-color: var(--bg-secondary);
+
+  /* Mobile touch-safe zone on the right for swipe gestures */
+  padding-right: 12px;
+
+  @media (min-width: 640px) {
+    padding-right: 20px;
+  }
+}
+
+@utility blog-article {
+  padding: 2rem;
+
+  /* Adjust left padding to maintain content balance */
+  padding-left: 2rem;
+
+  @media (width < 640px) {
+    padding: 1.5rem;
+    padding-left: 1.5rem;
+    padding-right: 1rem;
+    /* Less right padding since container handles the touch zone */
+  }
+}
+
+@utility blog-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-light);
+}
+
+@utility blog-title {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: var(--text-active);
+  margin-bottom: 1rem;
+  line-height: 1.25;
+  font-family: var(--font-urbanist);
+}
+
+@utility blog-meta {
+  display: flex;
+  align-items: center;
+  color: var(--text-inactive);
+  font-size: 0.875rem;
+  gap: 1rem;
+
+  @media (width < 640px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
+
+@utility blog-content {
+  max-width: none;
+
+  & p {
+    margin-bottom: 1.5rem;
+    line-height: 1.75;
+    color: var(--text-hover);
+    font-size: 1.125rem;
+
+    @media (width < 640px) {
+      font-size: 1rem;
+      margin-bottom: 1.25rem;
+    }
+  }
+}
+
+@utility blog-footer {
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-light);
+  text-align: center;
+  color: var(--text-inactive);
+
+  & p {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+
+    &:last-child {
+      font-size: 0.875rem;
+      margin-top: 0.5rem;
+      margin-bottom: 0;
+    }
+  }
+}
+
+@utility markdown-container {
+  white-space: pre-wrap;
+
+  & p {
+    @apply mb-5;
+  }
+
+  & h1 {
+    @apply font-bold mb-5;
+  }
+
+  & li {
+    @apply mb-3;
+  }
+
+  & li:last-child {
+    @apply mb-0;
+  }
+
+  & ol {
+    @apply list-decimal mx-0 mt-0 mb-5 pl-8;
+  }
+
+  & ul {
+    @apply list-disc mx-0 mt-0 mb-5 pl-8;
+  }
+
+  & a {
+    @apply underline;
+  }
+
+  &> :last-child {
+    @apply mb-0;
+  }
+
+  & hr {
+    margin: -1rem 0;
+    border: none;
+    border-top: 1px solid #d1d5db;
+    /* gray-300 */
+
+    /* &:last-child{
+        display: none;
+      } */
+  }
+}
+
+@utility chat-messages-container {
+  background-color: var(--bg-secondary);
+  overflow-y: auto;
+  padding: 8px 1px;
+  /* Added horizontal padding for touch-safe zone */
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+  width: 100%;
+
+  @media (min-width: 640px) {
+    padding: 16px 1px;
+    /* Slightly more padding on larger screens */
+    gap: 12px;
+  }
+}
+
+@utility turn-container {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
+  flex-shrink: 0;
+  scroll-margin-top: 16px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+@utility message-wrapper {
+  display: flex;
+  margin-bottom: 10px;
+  min-width: 0;
+
+  &.user {
+    justify-content: flex-start;
+    animation: slide-up-smooth 0.35s ease-out;
+    margin-bottom: 15px;
+  }
+
+  &.response {
+    justify-content: flex-start;
+    animation: slide-up-smooth 0.35s ease-out;
+  }
+
+  @media (min-width: 640px) {
+    margin-bottom: 8px;
+  }
+}
+
+@utility message-bubble {
+  max-width: 80%;
+  padding: 8px 12px;
+  font-size: 14px;
+  word-break: break-words;
+  margin-left: 12px;
+
+  @media (min-width: 640px) {
+    max-width: 320px;
+    font-size: 16px;
+  }
+
+  @media (min-width: 1024px) {
+    max-width: 448px;
+  }
+
+  &.user {
+    background-color: var();
+    color: var(--text-active);
+    border: 0.5px solid var(--text-active);
+    border-radius: .5rem;
+    box-shadow: var(--shadow-md);
+    min-width: 80%;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    white-space: pre-wrap;
+
+  }
+
+  &.response {
+    color: var(--text-hover);
+    max-width: 90%;
+  }
+}
+
+/* Global styles that must remain as CSS */
+html {
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Prevent mobile zoom on input focus */
+/* Mobile browsers zoom in when font-size < 16px on form elements */
+/* <input>, <textarea>, <select> - elements*/
+input,
+textarea,
+select {
+  font-size: 16px;
+}
+
+/* Mobile safe area handling */
+/*
+  to help with iphone notches and home indicator bars (content can be hidden behind notch!)
+
+  iPhone X+ with notch: env(safe-area-inset-top) = ~44px
+  iPhone with home indicator: env(safe-area-inset-bottom) = ~34px
+  Regular phones: All values = 0px
+
+  hence we use the max() - so we test that the browser supports it first (if not then it's gets ignore entirely)
+*/
+@supports (padding: max(0px)) {
+
+  /* Only run this code if browser supports max() function */
+  .mobile-safe-area {
+    padding-left: max(env(safe-area-inset-left), 0px);
+    padding-right: max(env(safe-area-inset-right), 0px);
+    padding-bottom: max(env(safe-area-inset-bottom), 0px);
+  }
+}
+
+.markdown-body pre {
+  background: transparent;
+  padding: 0;
+  margin: 0;
+}
+
+/* Frame */
+.mermaid-container {
+  width: 100%;
+  border: 0.5px solid var(--text-active);
+  border-radius: 0.5rem;
+  background: var(--bg-primary);
+  padding: 10px;           /* visual padding lives on the frame */
+  box-sizing: border-box;
+  min-width: 0;            /* critical in flex/grid ancestors */
+  min-height: 0;
+  border-radius: .5rem;
+  box-shadow: var(--shadow-md);
+}
+
+/* Scroll area */
+.mermaid-scroll {
+  width: 100%;
+  max-height: 40vh;        /* or height:auto; max-height:70vh; */
+  overflow-x: auto;        /* horizontal scroll */
+  overflow-y: auto;        /* allows vertical if diagram is tall */
+  min-width: 0;            /* allow shrinking */
+  min-height: 0;
+}
+
+
+/* Injected SVG wrapper */
+.mermaid-svg {
+  width: 98%;      /* let SVG be as wide as it wants */
+  height: auto;
+}
+
+/* Make sure the actual SVG expands naturally */
+.mermaid-svg > svg {
+  display: block;
+  width: 98%;
+  height: auto;
+}
+
+/* Error / loading area keeps consistent spacing */
+.mermaid-status {
+  padding: 8px 0;
+}
+
+/* Show source nicely on error */
+.mermaid-code {
+  margin-top: 8px;
+  overflow: auto;
+  white-space: pre;        /* preserve formatting */
+  background: transparent; /* keep your monochrome look */
+  font-size: 12px;
+}
+
+@layer base {
+
+  body,
+  html,
+  #root {
+    font-size: 12px;
+    /* Smaller base font size on mobile */
+  }
+
+  @media (min-width: 640px) {
+
+    body,
+    html,
+    #root {
+      font-size: 14px;
+      /* Medium screens */
+    }
+  }
+
+  @media (min-width: 1024px) {
+
+    body,
+    html,
+    #root {
+      font-size: 16px;
+      /* Default size for larger screens */
+    }
+  }
+
+  ::-webkit-scrollbar {
+    @apply h-4 w-1;
+  }
+
+  ::-webkit-scrollbar:horizontal {
+    @apply h-1.5 w-1 p-2;
+  } 
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent rounded-sm;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--border-light);
+    border: 1px solid var(--bg-secondary);
+    border-radius: 1px;
+  }
+}

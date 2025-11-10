@@ -1,0 +1,41 @@
+FROM python:3.12-slim as requirements-stage
+
+WORKDIR /tmp
+RUN pip install poetry
+COPY ./pyproject.toml ./poetry.lock* /tmp/
+RUN poetry self add poetry-plugin-export
+RUN poetry export -f requirements.txt --output requirements.txt --without-hashes
+
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    libpq-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+COPY --from=requirements-stage /tmp/requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir --upgrade -r /app/requirements.txt
+
+# Copy application code and data
+COPY ./app /app/app
+COPY ./data /app/data
+
+# Environment variables for Cloud Run
+ENV PYTHONPATH=/app
+ENV PORT=8080
+ENV HOST=0.0.0.0
+
+EXPOSE 8080
+
+# Health check using the readiness endpoint
+HEALTHCHECK --interval=30s --timeout=30s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8080/ready || exit 1
+
+# Start the application
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]

@@ -10,7 +10,6 @@ from .base import RetrievalBase
 
 # --------------------------------------------------------------------------
 
-# TODO: I need to make sure that this send out a response or something
 class FindByTraits(RetrievalBase):
     async def __call__(
         self,
@@ -25,7 +24,6 @@ class FindByTraits(RetrievalBase):
         if not filters:
             return f"No filter provided in task: {task.id}"
         
-        # TODO: we can add this to the operation results later
         if filters.authors and len(filters.authors) > filters.limit:
             logger.warning(f"⚠️ There are more authors than the requested limit. Exapnding the limit")
         

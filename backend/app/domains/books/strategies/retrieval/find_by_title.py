@@ -27,7 +27,6 @@ class FindByTitle(RetrievalBase):
             return f"No title provided in task: {task.id}"
 
         results = await request_context.book_store.search_by_title(title=book_title, authors=task.authors)
-        # TODO: Make sure this is good
         accepted = await self.retrieval_post_processing(results, task, request_context)
         
         if accepted:

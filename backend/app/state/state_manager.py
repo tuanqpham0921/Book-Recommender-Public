@@ -39,7 +39,6 @@ class StateManager:
 
     async def get_chat_history(self, session_id: str) -> List[APIMessage]:
         """Retrieve all conversation messages."""
-        # TODO: add pagination support (limit, offset)
         try:
             conversation_history = await self.conversations.get(session_id)
             return redis_chat_deserialization(conversation_history)

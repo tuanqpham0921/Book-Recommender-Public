@@ -5,7 +5,6 @@ import DisplayPanel from '@/components/DisplayPanel'
 
 function BookRecommenderPage() {
   const [activeView, setActiveView] = useState('chat')
-  // TODO: change this for production
   const [backendReady, setBackendReady] = useState(true)
   const navigate = useNavigate()
   const location = useLocation()

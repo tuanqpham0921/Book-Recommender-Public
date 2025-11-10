@@ -42,7 +42,6 @@ class RequestContext:
     # Results from each step
     step_results: Dict[str, Any] = field(default_factory=dict)
 
-    # TODO: we might need this instead of just querying
     context_size: int = 0
     # context_messages: List[APIMessage] = field(default_factory=list)
 
@@ -96,19 +95,6 @@ class RequestContext:
             "chat_messages_count": len(self.chat_messages),
         }
 
-    # TODO: implement this
-    # async def set_previous_n_messages(self, n: int = 3):
-    #     """Load previous messages from state manager into context."""
-    #     if self.state_manager is None or self.session_id is None:
-    #         return
-
-    #     all_messages = await self.state_manager.get_chat_history(self.session_id)
-    #     # Load into user conversation (for context)
-    #     self.chat_messages.extend(all_messages[-n:] if all_messages else [])
-    #     # Legacy compatibility
-    #     self.chat_messages = all_messages if all_messages else []
-    #     self.context_size = len(self.chat_messages)
-
     def add_message(self, message: APIMessage, background: bool = True):
         """Add a message to the in-memory context and optionally persist it asynchronously."""
         if (hasattr(message, "tool_calls") and message.tool_calls) or (
@@ -118,7 +104,6 @@ class RequestContext:
         else:
             self.add_chat_message(message)
 
-    # TODO: persist the pipeline messages
     async def persist_chat_messages(self):
         """Persist a message to the state manager."""
         if not self.state_manager:

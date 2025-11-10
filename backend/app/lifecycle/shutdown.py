@@ -7,51 +7,61 @@ logger = logging.getLogger(__name__)
 
 
 async def shutdown_redis(app: FastAPI):
+    """Close Redis connection gracefully."""
     redis = getattr(app.state, "redis", None)
     if redis:
         try:
             await redis.close()
-            logger.info("🧹 Redis connection closed")
+            logger.info("Redis connection closed")
         except Exception as e:
-            logger.warning(f"⚠️ Failed to close Redis: {e.__class__.__name__}")
+            logger.warning(f"Failed to close Redis: {e.__class__.__name__}")
 
 
 async def shutdown_postgres(app: FastAPI):
+    """Close Postgres connection pool gracefully."""
     pg = getattr(app.state, "pg_pool", None)
     if pg:
         try:
             await pg.close()
-            logger.info("🧹 Postgres connection pool closed")
+            logger.info("Postgres connection pool closed")
         except Exception as e:
-            logger.warning(f"⚠️ Failed to close Postgres: {e.__class__.__name__}")
+            logger.warning(f"Failed to close Postgres: {e.__class__.__name__}")
 
 
 async def shutdown_sqlalchemy_engine(app: FastAPI):
+    """Dispose SQLAlchemy engine and close connections."""
     engine = getattr(app.state, "sqlalchemy_engine", None)
     if engine:
         try:
             await engine.dispose()
-            logger.info("🧹 SQLAlchemy engine disposed")
+            logger.info("SQLAlchemy engine disposed")
         except Exception as e:
-            logger.warning(f"⚠️ Failed to close SQLAlchemy: {e.__class__.__name__}")
+            logger.warning(f"Failed to close SQLAlchemy: {e.__class__.__name__}")
 
 
 async def shutdown_openai(app: FastAPI):
+    """Close OpenAI client connection if applicable."""
     client = getattr(app.state, "openai_client", None)
     if client and hasattr(client, "close"):
         try:
             await client.close()
-            logger.info("🧹 OpenAI client closed")
+            logger.info("OpenAI client closed")
         except Exception as e:
-            logger.warning(f"⚠️ Failed to close OpenAI client: {e.__class__.__name__}")
+            logger.warning(f"Failed to close OpenAI client: {e.__class__.__name__}")
 
 
 async def shutdown_all(app: FastAPI):
-    logger.info("🔻 Shutting down services...")
+    """
+    Gracefully shutdown all application services.
+
+    Args:
+        app: FastAPI application instance
+    """
+    logger.info("Shutting down services...")
     await asyncio.gather(
         shutdown_redis(app),
         shutdown_postgres(app),
         shutdown_openai(app),
         shutdown_sqlalchemy_engine(app),
     )
-    logger.info("✅ All shutdown tasks completed")
+    logger.info("All shutdown tasks completed")

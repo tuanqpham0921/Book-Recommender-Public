@@ -24,6 +24,5 @@ class ClassificationStep:
     system_message: SystemMessage
     loadingMessage: str = "Thinking ..."  # noqa: N815 (retain external name)
 
-    # TODO: double check this
     before: Optional[Callable[[dict, RequestContext], None]] = None
     after: Optional[Callable[[BaseModel, RequestContext], None]] = None

@@ -19,7 +19,6 @@ def health_check():
     return {"status": "ok", "timestamp": time.time()}
 
 
-# TODO: use the depend on get core services
 @router.post("/ready", include_in_schema=False, response_model=HealthStatus)
 async def detailed_health_check(request: Request):
     """Detailed health check with service status."""

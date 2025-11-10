@@ -14,33 +14,49 @@ from app.clients import OpenAIClient
 logger = logging.getLogger(__name__)
 
 
-# --- Generic helper for async startup with timeout ---
 async def _startup_task(name: str, coro, timeout: int):
-    """Run an async startup task with logging and timeout."""
-    logger.info(f"🔄 Initializing {name}...")
+    """
+    Execute an async startup task with timeout and error handling.
+
+    Args:
+        name: Service name for logging
+        coro: Async coroutine to execute
+        timeout: Maximum seconds to wait
+
+    Returns:
+        Result from coroutine or None on failure
+    """
+    logger.info(f"Initializing {name}...")
     try:
         result = await asyncio.wait_for(coro(), timeout=timeout)
-        logger.info(f"✅ {name} initialized successfully")
+        logger.info(f"{name} initialized successfully")
         return result
     except asyncio.TimeoutError:
-        logger.error(f"❌ {name} init timeout after {timeout}s")
+        logger.error(f"{name} init timeout after {timeout}s")
     except Exception as e:
-        logger.error(f"❌ {name} init failed: {e.__class__.__name__}: {e}")
+        logger.error(f"{name} init failed: {e.__class__.__name__}: {e}")
     return None
 
 
-# --- Individual service initializers ---
 async def start_openai_client() -> OpenAIClient:
+    """Initialize OpenAI client with API key from settings."""
     if not settings.openai.API_KEY:
         raise ValueError("OpenAI API key not set")
     return OpenAIClient(api_key=settings.openai.API_KEY)
 
 
 def start_orchestrator() -> Orchestrator:
+    """Create task orchestration engine."""
     return Orchestrator()
 
 
 async def start_redis():
+    """
+    Initialize Redis connection and session store.
+
+    Returns:
+        Tuple of (redis_client, session_store)
+    """
     redis_client = await redis.init_redis()
     await redis_client.ping()
     store = SessionStore(
@@ -57,18 +73,27 @@ async def start_redis():
 
 
 async def start_postgres():
+    """Initialize Postgres connection pool."""
     return await postgres.init_postgres()
 
 
 async def start_sqlalchemy_engine():
+    """Initialize SQLAlchemy async engine and session factory."""
     return await sqlalchemy.init_sqlalchemy()
 
 
-# --- Main startup routine ---
 async def start_all(app: FastAPI):
-    logger.info("🔄 Starting up all services...")
+    """
+    Start all application services and attach to app state.
 
-    # Critical service: OpenAI client
+    Args:
+        app: FastAPI application instance
+
+    Raises:
+        RuntimeError: If critical services fail to start
+    """
+    logger.info("Starting up all services...")
+
     try:
         app.state.openai_client = await _startup_task(
             "OpenAI client", start_openai_client, AppConfig.DEFAULT_TIMEOUT
@@ -76,23 +101,15 @@ async def start_all(app: FastAPI):
         if not app.state.openai_client:
             raise RuntimeError("OpenAI client startup failed")
     except Exception as e:
-        logger.critical(f"❌ Failed to start OpenAI client: {e}")
+        logger.critical(f"Failed to start OpenAI client: {e}")
         raise
-
-    # # Optional services
-    # redis_result = await _startup_task("Redis", start_redis, AppConfig.REDIS_TIMEOUT)
-    # if redis_result:
-    #     app.state.redis, app.state.session_store = redis_result
-    # else:
-    #     logger.warning("⚠️ Redis service not available")
 
     app.state.pg_pool = await _startup_task(
         "Postgres", start_postgres, AppConfig.POSTGRES_TIMEOUT
     )
     if not app.state.pg_pool:
-        logger.warning("⚠️ Postgres service not available")
+        logger.warning("Postgres service not available")
 
-    # SQLAlchemy returns tuple (engine, session_factory)
     sqlalchemy_result = await _startup_task(
         "SQLAlchemy", start_sqlalchemy_engine, AppConfig.POSTGRES_TIMEOUT
     )
@@ -106,4 +123,4 @@ async def start_all(app: FastAPI):
 
     app.state.orchestrator = start_orchestrator()
 
-    logger.info("✅ Startup routine completed successfully.")
+    logger.info("Startup routine completed successfully.")

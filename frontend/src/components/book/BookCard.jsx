@@ -5,7 +5,6 @@ export const BookCard = ({ book }) => {
   return (
     <div className="bg-white rounded-2xl shadow-sm flex flex-col h-full p-3">
       <div className="flex flex-col h-full">
-        {/* TODO make this into an component, and fix the error (use sizing container) */}
         <img
           src={book.thumbnail}
           alt={book.title}

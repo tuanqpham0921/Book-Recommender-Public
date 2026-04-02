@@ -2,7 +2,7 @@
 
 An AI-powered book recommendation system that combines **Large Language Models (LLMs)** with **embedding-based similarity search** to help users discover books through semantic understanding, mood-based queries, and thematic exploration.
 
-**[Live Demo](https://book-recommender-tuanqpham0921.web.app/)** | **[Blog](https://book-recommender-tuanqpham0921.web.app/blog)**
+**[Video Demo](https://drive.google.com/file/d/1iMLYHvfMU0ECTITtlwgHNjXtJGePy7fE/view?usp=sharing)**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 

@@ -27,6 +27,7 @@ class ExclusionBookFilter(BaseModel):
 class BooksFilter(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
+    # TODO: make sure the list are safe with max items
     authors: Optional[list[str]] = Field(default=None, description="Authors to include.")
     categories: Optional[list[str]] = Field(default=None, description="List of categories or subgenres.")
     keywords: Optional[list[str]] = Field(default=None, description="Keywords for semantic or fuzzy matching.")

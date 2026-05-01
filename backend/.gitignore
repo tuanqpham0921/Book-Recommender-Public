@@ -1,12 +1,24 @@
+# Python
 __pycache__/
 venv/
 .venv/
-.env/
-.env
-.env.*
-!.env.example
-!.env.production
-.vscode/
-logs/
+
+# Environment & Config
+config/.env
+config/.env.*
+!config/.env.example
+!config/.env.production
+config/*.yaml
+!config/env-vars.yaml.example
+
+infra/scripts/
+
+# Data & Exports
 *.csv
 examples/
+
+# Docker volumes
+caddy_data/
+caddy_config/
+postgres_data/
+redis_data/

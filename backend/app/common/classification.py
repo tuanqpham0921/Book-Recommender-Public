@@ -17,7 +17,7 @@ class ClassificationNode(BaseModel, Generic[T]):
     """Generic classification node for any strategy type."""
     strategies: List[T] = Field(
         ...,
-        max_length=15,
+        max_length=15, # NOTE: just have less than this for now
         description="List of strategies generated from the query")
 
     async def __call__(self, accepted_tuning: float = 0.7) -> ClassificationResult[T]:

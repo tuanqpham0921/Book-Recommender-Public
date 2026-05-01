@@ -1,0 +1,100 @@
+services:
+  # Caddy web server (reverse proxy)
+  caddy:
+    image: caddy:2-alpine
+    container_name: book-rec-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80" # HTTP
+      - "443:443" # HTTPS
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+      - /var/log/caddy:/var/log/caddy # Log directory
+    depends_on:
+      - app
+    networks:
+      - book-rec-network
+
+  app:
+    build: .
+    container_name: book-rec-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      - ALLOW_ORIGINS
+      - OPENAI_API_KEY
+      - MODEL
+      - EMBEDDING_MODEL
+      - EMBEDDING_DIMENSIONS
+      - REDIS_HOST
+      - REDIS_PORT
+      - DATA_DIR
+      - EXPORT_DIR
+      - POSTGRES_HOST
+      - POSTGRES_PORT
+      - POSTGRES_DB
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - ENVIRONMENT=production
+    volumes:
+      - app_logs:/home/logs
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8000/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - book-rec-network
+
+  redis:
+    image: redis/redis-stack-server:latest
+    container_name: book-rec-redis
+    restart: unless-stopped
+    environment:
+      - REDIS_ARGS=--save 600 1 --save 300 10 --save 60 100 --maxmemory 512mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    networks:
+      - book-rec-network
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: book-rec-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./data:/docker-entrypoint-initdb.d/ # For initialization scripts
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - book-rec-network
+
+networks:
+  book-rec-network:
+    driver: bridge
+
+volumes:
+  caddy_data:
+  caddy_config:
+  redis_data:
+  postgres_data:
+  app_logs:

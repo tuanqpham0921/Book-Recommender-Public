@@ -13,17 +13,16 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["System"])
 
 
-@router.post("/health", include_in_schema=False)
+@router.get("/health", include_in_schema=False)
 def health_check():
     """Basic health check - always returns ok if app is running."""
     return {"status": "ok", "timestamp": time.time()}
 
 
-@router.post("/ready", include_in_schema=False, response_model=HealthStatus)
+# TODO: use the depend on get core services
+@router.get("/ready", include_in_schema=False, response_model=HealthStatus)
 async def detailed_health_check(request: Request):
     """Detailed health check with service status."""
-
-    return {"status": "ready", "service": "book-recommender-api", "version": "3.0.0"}
 
     health = HealthStatus()
 
@@ -66,7 +65,7 @@ async def detailed_health_check(request: Request):
             result = await conn.execute(text("SELECT 1 as test"))
             test_value = result.scalar()
             if test_value == 1:
-                logger.info("SQLAlchemy connection test passed")
+                logger.info("✅ SQLAlchemy connection test passed")
 
     if (
         health.openai

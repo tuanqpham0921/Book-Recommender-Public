@@ -9,7 +9,6 @@ DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 class JSONFormatter(logging.Formatter):
     """Formatter that outputs logs as structured JSON."""
-
     def format(self, record: logging.LogRecord) -> str:
         log_entry = {
             "timestamp": self.formatTime(record, self.datefmt),
@@ -36,7 +35,6 @@ def setup_logging(
     # Delay import to avoid circular dependency
     try:
         from app.config.settings.main import settings
-
         environment = env or settings.app.ENVIRONMENT
     except Exception:
         environment = env or os.getenv("APP_ENVIRONMENT", "development")
@@ -60,9 +58,9 @@ def setup_logging(
         formatter = JSONFormatter()
         for handler in root_logger.handlers:
             handler.setFormatter(formatter)
-        root_logger.info("Structured JSON logging enabled")
+        root_logger.info("🧾 Structured JSON logging enabled")
 
-    root_logger.info(f"Logging initialized ({environment}) - level: {log_level}")
+    root_logger.info(f"📋 Logging initialized ({environment}) — level: {log_level}")
     return root_logger
 
 

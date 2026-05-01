@@ -8,6 +8,8 @@ from app.db import postgres
 from app.clients.openai_client import OpenAIClient
 from app.config import settings
 
+# TODO: this is wrong, need to changeto have the full list of columns (21)
+# from deving, idk where is the legacy code for this
 BOOK_COLUMNS = """isbn13, title, authors, categories, genre, description, published_year,
                  average_rating, num_pages, ratings_count, thumbnail, large_thumbnail,
                  title_and_subtiles, anger, disgust, fear, joy, sadness, surprise, neutral"""
@@ -231,7 +233,9 @@ async def embed_and_store_books(books, batch_size=10):
                     pbar.update(len(batch))
                     continue
 
-        print(f"\nSuccessfully embedded and stored {total_embedded}/{len(books)} books")
+        print(
+            f"\n✅ Successfully embedded and stored {total_embedded}/{len(books)} books"
+        )
 
     except Exception as e:
         print(f"Error during book embedding and storage: {e}")

@@ -1,0 +1,51 @@
+# Global options
+{
+    # Enable admin API on localhost:2019
+    admin localhost:2019
+    
+    # Auto HTTPS configuration
+    # email your-email@example.com  # Uncomment and add your email for production SSL
+}
+
+# Development configuration
+:80 {
+    # Reverse proxy to FastAPI backend
+    reverse_proxy app:8000
+    
+    # Logging
+    log {
+        output stdout
+        level INFO
+    }
+}
+
+# Production configuration (uncomment and modify for your domain)
+# your-domain.com {
+#     reverse_proxy app:8000
+#     
+#     # Enable automatic HTTPS
+#     tls {
+#         # Let's Encrypt will be used automatically
+#     }
+#     
+#     # Security headers
+#     header {
+#         # HSTS
+#         Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+#         # XSS Protection
+#         X-Content-Type-Options "nosniff"
+#         X-Frame-Options "DENY"
+#         X-XSS-Protection "1; mode=block"
+#         # CSP
+#         Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
+#     }
+#     
+#     # Rate limiting (optional)
+#     rate_limit {
+#         zone dynamic {
+#             key {remote_host}
+#             events 100
+#             window 1m
+#         }
+#     }
+# }

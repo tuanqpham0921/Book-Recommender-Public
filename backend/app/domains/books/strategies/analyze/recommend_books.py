@@ -31,6 +31,11 @@ class RecommendBooks(StrategyBase):
         sse_stream = request_context.sse_stream
         semantic_input = task.semantic_input
         filters = task.filters or BooksFilter()
+        
+        print("------- FILTERS --------")
+        print(semantic_input)
+        print(filters)
+        print("------------------------")
 
         # Step 1: Get reference books context
         dependent_books = list(dependent_results.values())
@@ -41,16 +46,19 @@ class RecommendBooks(StrategyBase):
 
         # Step 2: Get candidate books from database (broader search)
         candidate_books = []
-        if query_texts:
-            for query in query_texts:
-                result = await self._get_candidate_books(filters, query, request_context)
+        for query in query_texts:
+            result = await self._get_candidate_books(filters, query, request_context)
 
-                if result:
-                    candidate_books.extend(result)
-        else:
-            result = await request_context.book_store.search_by_book_filter(filters)
             if result:
-                    candidate_books.extend(result)
+                candidate_books.extend(result)
+
+        result = await request_context.book_store.search_by_book_filter(filters)
+        if result:
+            candidate_books.extend(result)
+            
+        print("-------- Candidate Books -----")
+        print(candidate_books)
+        print("-------------------------------")
 
         # Step 3: Use LLM for semantic recommendation
         book_data = self._format_books_for_llm(dependent_books)

@@ -24,7 +24,7 @@ cd backend
 poetry install
 
 # Set up environment variables
-cp .env.example .env  # Create this file with required variables
+cp config/.env.example config/.env # Create this file with required variables
 
 # Required environment variables:
 # OPENAI_API_KEY=your_openai_api_key
@@ -109,32 +109,37 @@ The Cloud Run configuration is optimized for:
 ## Project Structure
 
 ```
-Book-Recommender-Public/
+Book-Recommender/
 ├── backend/
-│   ├── app/
-│   │   ├── api/              # API routes and schemas
-│   │   ├── clients/          # OpenAI and external clients
-│   │   ├── config/           # Settings and configuration
-│   │   ├── db/               # Database connections
-│   │   ├── domains/          # Domain models (books, etc.)
-│   │   ├── orchestration/    # Task orchestration engine
-│   │   ├── pipeline/         # Processing pipeline nodes
-│   │   ├── state/            # State management
-│   │   └── stores/           # Data stores and repositories
-│   ├── Dockerfile
-│   ├── Dockerfile.cloudrun
+│   ├── app/                   # Application code
+│   │   ├── api/               # API routes and schemas
+│   │   ├── clients/           # OpenAI and external clients
+│   │   ├── config/            # Settings and logging
+│   │   ├── db/                # Database connections
+│   │   ├── domains/           # Domain models (books, etc.)
+│   │   ├── orchestration/     # Task orchestration engine
+│   │   ├── pipeline/          # Processing pipeline nodes
+│   │   ├── state/             # State management
+│   │   └── stores/            # Data stores and repositories
+│   ├── config/                # Environment files (git-ignored locally)
+│   ├── infra/                 # Infrastructure & deployment
+│   ├── data/                  # Data files and examples
+│   ├── Makefile
 │   └── pyproject.toml
 │
-└── frontend/
-    ├── src/
-    │   ├── components/       # React components
-    │   ├── pages/            # Page components
-    │   ├── utils/            # Utilities
-    │   └── api.js            # API client
-    ├── public/
-    │   └── blog-posts/       # Documentation & diagrams
-    ├── package.json
-    └── vite.config.js
+├── frontend/
+│   ├── src/
+│   │   ├── components/        # React components
+│   │   ├── pages/             # Page components
+│   │   ├── utils/             # Utilities
+│   │   ├── api.js             # API client (uses VITE_BACKEND_URL)
+│   ├── public/
+│   │   └── blog-posts/        # Documentation & diagrams
+│   ├── package.json
+│   ├── vite.config.js
+│   └── Dockerfile
+│
+└── README.md
 ```
 
 ---

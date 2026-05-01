@@ -156,7 +156,8 @@ The **Book Recommender System** is still evolving, but it already demonstrates h
 
 If you'd like to share ideas, feedback, or collaborate:
 
-**tuanqpham0921@gmail.com**
+Email: tuanqpham0921@gmail.com  
+GitHub: [Book-Recommender-Public](https://github.com/tuanqpham0921/Book-Recommender-Public)
 
 ---
 

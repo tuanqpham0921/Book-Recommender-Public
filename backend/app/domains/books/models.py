@@ -45,6 +45,8 @@ class BookModel(Base):
     
     thumbnail = Column(String, nullable=True)
     ratings_count = Column(Integer, nullable=True)
+    
+    # TODO: missing embedding columns
 
     def __repr__(self):
         return (

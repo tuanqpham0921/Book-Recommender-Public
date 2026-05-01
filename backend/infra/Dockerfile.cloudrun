@@ -2,7 +2,7 @@ FROM python:3.12-slim as requirements-stage
 
 WORKDIR /tmp
 RUN pip install poetry
-COPY ./pyproject.toml ./poetry.lock* /tmp/
+COPY ../pyproject.toml ../poetry.lock* /tmp/
 RUN poetry self add poetry-plugin-export
 RUN poetry export -f requirements.txt --output requirements.txt --without-hashes
 
@@ -23,8 +23,8 @@ COPY --from=requirements-stage /tmp/requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir --upgrade -r /app/requirements.txt
 
 # Copy application code and data
-COPY ./app /app/app
-COPY ./data /app/data
+COPY ../app /app/app
+COPY ../data /app/data
 
 # Environment variables for Cloud Run
 ENV PYTHONPATH=/app

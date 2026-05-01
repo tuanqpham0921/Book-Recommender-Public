@@ -28,12 +28,7 @@ logger = logging.getLogger(__name__)
 
 
 class Orchestrator:
-    """
-    Main orchestration engine for processing user queries through AI pipelines.
-
-    Coordinates the execution of multi-step pipelines including query parsing,
-    task classification, dependency resolution, and task execution.
-    """
+    """Main orchestration engine for processing user queries through AI pipelines."""
 
     def __init__(self):
         """Initialize the orchestrator."""
@@ -42,35 +37,27 @@ class Orchestrator:
     async def _handle_tool_call(
         self, tool_calls, max_calls: int = 10, **extra_kwargs
     ) -> list[ToolMessage]:
-        """
-        Execute LLM tool calls and collect results.
-
-        Args:
-            tool_calls: List of OpenAI tool calls to execute
-            max_calls: Maximum number of calls to process
-            **extra_kwargs: Additional arguments passed to tool instances
-
-        Returns:
-            List of ToolMessage results
-        """
+        """Execute tool calls and return the results."""
         results = []
         for tool_call in tool_calls[:max_calls]:
             try:
 
                 tool_name = tool_call.function.name
                 tool_id = tool_call.id
-                logger.info(f"Starting tool call: {tool_name} (id: {tool_id})")
+                logger.info(f"🔧 Starting tool call: {tool_name} (id: {tool_id})")
 
                 raw_args = json.loads(tool_call.function.arguments)
                 tool_instance = tool_call.function.parsed_arguments
 
                 start = time.monotonic()
-                logger.info(f"Executing {tool_name}")
+                # logger.info(f"⚡ Executing {tool_name} with args: {raw_args}")
+                logger.info(f"⚡ Executing {tool_name}")
+
 
                 result = await tool_instance(**extra_kwargs)
                 elapsed = round(time.monotonic() - start, 2)
 
-                logger.info(f"Tool {tool_name} completed successfully in {elapsed}s")
+                logger.info(f"✅ Tool {tool_name} completed successfully in {elapsed}s")
 
                 results.append(
                     ToolMessage(
@@ -81,27 +68,18 @@ class Orchestrator:
                     )
                 )
             except json.JSONDecodeError as e:
-                logger.error(f"JSON parsing failed for tool {tool_name}: {e}")
+                logger.error(f"🛑 JSON parsing failed for tool {tool_name}: {e}")
                 continue
             except Exception as e:
                 logger.error(
-                    f"Tool execution failed for {tool_name}: {e}", exc_info=True
+                    f"🛑 Tool execution failed for {tool_name}: {e}", exc_info=True
                 )
                 continue
 
         return results
 
     async def _run_initial_step(self, request_context, sse_stream) -> str | None:
-        """
-        Run initial parsing to classify query scope and determine pipeline continuation.
-
-        Args:
-            request_context: Current request context with conversation history
-            sse_stream: Server-sent events stream for real-time updates
-
-        Returns:
-            InitialParseResult containing classification and reasoning
-        """
+        """Run the initial parsing step to determine if the query is in-scope."""
 
         await sse_stream.send_ui_loading("Thinking...")
 
@@ -112,9 +90,10 @@ class Orchestrator:
             description=f"Fill the schema for {tool_name}",
         )
         tool_choice = {"type": "function", "function": {"name": tool_name}}
-
+        # Set current step for tracking
         request_context.set_current_step("initial_parse")
 
+        # Use pipeline conversation for internal LLM calls
         pipeline_messages = request_context.get_conversation_for_llm(
             include_pipeline=True
         )
@@ -129,20 +108,23 @@ class Orchestrator:
             top_p=0.8,
         )
         assistant_msg = await request_context.llm_client.execute(req)
-
+        # this shouldn't happen at all but raise to be safe
         if not assistant_msg or not assistant_msg.tool_calls:
-            raise RuntimeError(f"{tool_name} parse failed")
+            raise RuntimeError(f"🛑 {tool_name} parse {tool_name} FAILED")
 
+        # Add to pipeline conversation (internal)
         request_context.add_message(assistant_msg)
         tool_message = await self._handle_tool_call(
             assistant_msg.tool_calls, max_calls=1
         )
 
         if not tool_message:
-            raise RuntimeError(f"{tool_name} call failed")
+            raise RuntimeError(f"🛑 {tool_name} call {tool_message} FAILED")
 
+        # Add tool response to pipeline conversation
         request_context.add_message(tool_message[0])
 
+        # Store the result for later use
         parse_result = tool_message[0].content
         request_context.set_step_result("initial_parse", parse_result)
 
@@ -172,16 +154,7 @@ class Orchestrator:
         request_context: RequestContext,
         initial_parse_result: InitialParseResult,
     ) -> BookClassificationResult:
-        """
-        Classify user query into specific book-related strategies.
-
-        Args:
-            request_context: Current request context
-            initial_parse_result: Result from initial parsing step
-
-        Returns:
-            BookClassificationResult with classified strategies
-        """
+        """Classify the user query into book-related strategies."""
         tool_name = BookClassificationNode.__name__
         tool = pydantic_function_tool(
             BookClassificationNode,
@@ -210,6 +183,8 @@ class Orchestrator:
             top_p=0.5,
         )
 
+        # req.export(file_name="analyze_classification")
+
         assistant_msg = await request_context.llm_client.execute(req)
 
         if not assistant_msg or not assistant_msg.tool_calls:
@@ -222,10 +197,11 @@ class Orchestrator:
             assistant_msg.tool_calls, max_calls=1
         )
         if not tool_message:
-            raise RuntimeError(f"{tool_name} call failed")
+            raise RuntimeError(f"🛑 {tool_name} call {tool_message} FAILED")
 
         request_context.add_message(tool_message[0])
 
+        # we know for a fact it must have the fragments here
         return tool_message[0].content
 
     async def _run_create_task_plan(
@@ -234,17 +210,7 @@ class Orchestrator:
         initial_parse_result: InitialParseResult,
         node_ids,
     ) -> TaskPlan:
-        """
-        Generate task execution plan with dependency resolution.
-
-        Args:
-            request_context: Current request context
-            initial_parse_result: Result from initial parsing
-            node_ids: Dictionary of available node IDs and their definitions
-
-        Returns:
-            TaskPlan with ordered task execution strategy
-        """
+        """Create a task execution plan with dependency resolution."""
 
         tool_name = TaskGenerationNode.__name__
         tool_choice = {"type": "function", "function": {"name": tool_name}}
@@ -278,17 +244,21 @@ class Orchestrator:
             top_p=0.5,
         )
 
+        # req.export(file_name="task_planner")
+
+        # initial parsing, with no streaming or content (forcing tool)
         assistant_msg = await request_context.llm_client.execute(req)
 
+        # this shouldn't happen at all but raise to be safe
         if not assistant_msg or not assistant_msg.tool_calls:
-            raise RuntimeError(f"{tool_name} parse failed")
+            raise RuntimeError(f"🛑 {tool_name} parse {tool_name} FAILED")
 
         request_context.add_message(assistant_msg)
         tool_message = await self._handle_tool_call(
             assistant_msg.tool_calls, max_calls=1, node_ids=node_ids
         )
         if not tool_message:
-            raise RuntimeError(f"{tool_name} call failed")
+            raise RuntimeError(f"🛑 {tool_name} call {tool_message} FAILED")
 
         request_context.add_message(tool_message[0])
 
@@ -297,18 +267,7 @@ class Orchestrator:
     async def run_tasks(
         self, node_ids, task_planner_: TaskPlan, sse_stream: SSEStream, request_context
     ):
-        """
-        Execute tasks according to dependency-resolved plan.
-
-        Args:
-            node_ids: Available task node definitions
-            task_planner_: Resolved task execution plan
-            sse_stream: Stream for sending updates
-            request_context: Current request context
-
-        Returns:
-            Dictionary mapping task IDs to their results
-        """
+        """Execute tasks in the planned order with dependency resolution."""
 
         depends_map = {cur.id: cur.depends_on for cur in task_planner_.accepted}
         results = {}
@@ -319,9 +278,11 @@ class Orchestrator:
 
             node_type = task.node_type
 
+            # Create strategy instance and call it with proper arguments
             strategy_class = BOOK_STRAT_REGISTRY[node_type]
             strategy_instance = strategy_class()
 
+            # Pass the task data and context to the strategy
             result = await strategy_instance(
                 task=task, dependent_results=deps, request_context=request_context
             )
@@ -335,19 +296,7 @@ class Orchestrator:
         request_context: RequestContext,
         sse_stream: SSEStream,
     ):
-        """
-        Execute complete conversation pipeline from parsing to task execution.
-
-        Steps:
-        1. Initial parsing and scope classification
-        2. Strategy classification
-        3. Task plan generation
-        4. Task execution with dependency resolution
-
-        Args:
-            request_context: Current request context
-            sse_stream: Stream for real-time updates
-        """
+        """Execute the complete conversation pipeline from parsing to task execution."""
         try:
             initial_parse_result = await self._run_initial_step(
                 request_context, sse_stream
@@ -376,6 +325,7 @@ class Orchestrator:
 
             node_ids = classified_strategy_.get_accepted_node_ids()
 
+            # ----------------------------------------------------------
             await sse_stream.send_ui_loading("Planning The Tasks...")
             task_planner_ = await self._run_create_task_plan(
                 request_context=request_context,
@@ -384,19 +334,17 @@ class Orchestrator:
             )
 
             if task_planner_:
+                # task_planner_.export()
                 mermaid_diagram = task_planner_.get_accepted_diagram(node_ids)
                 await sse_stream.send_chars("__My Plan for Your Request__")
                 await sse_stream.send_mermaid(mermaid_diagram)
-                await sse_stream.send_chars(
-                    "_Note:_ This flow shows how your query will run.\n"
-                )
-                await sse_stream.send_chars(
-                    "Soon, you’ll be able to edit or customize the plan before execution for full transparency!"
-                )
+                await sse_stream.send_chars("_Note:_ This flow shows how your query will run.\n")
+                await sse_stream.send_chars("Soon, you’ll be able to edit or customize the plan before execution for full transparency!")
                 await sse_stream.send_divider()
             else:
                 await sse_stream.send_error("Unable to generate a Task Planner")
 
+            # ----------------------------------------------------------
             await sse_stream.send_ui_loading("Executing the tasks...")
 
             result = await self.run_tasks(
@@ -410,15 +358,15 @@ class Orchestrator:
             logger.error(f"Error in conversation step: {str(e)}")
             raise
         finally:
-            pass
+            ...
+            # request_context.export()
+            # await request_context.persist_chat_messages()
+            # await request_context.state_manager.export_snapshot(
+            #     request_context.session_id
+            # )
 
     async def run(self, request_context: RequestContext):
-        """
-        Main entry point for orchestration with SSE streaming.
-
-        Args:
-            request_context: Request context containing conversation and state
-        """
+        """Run orchestration with SSE streaming."""
         sse_stream = request_context.sse_stream
         try:
             await sse_stream.send_ui_loading("Starting conversation...")
@@ -429,8 +377,9 @@ class Orchestrator:
                 timeout=300.0,
             )
 
+            # Normal completion
             await sse_stream.send_event("complete", {"status": "completed"})
-            logger.info("Orchestration completed successfully")
+            logger.info("✅ Orchestration completed successfully")
 
         except asyncio.TimeoutError:
             msg = "Uhh... request timed out (5 mins) while processing your query."
@@ -438,16 +387,15 @@ class Orchestrator:
             await sse_stream.send_error(msg)
 
         except asyncio.CancelledError:
-            logger.info("Orchestration cancelled before shutdown or client abort.")
-            await sse_stream.send_error(
-                f"Oh no... orchestration server while processing your query."
-            )
+            # Raised if server reloads or client disconnects mid-stream
+            logger.info("🛑 Orchestration cancelled before shutdown or client abort.")
+            await sse_stream.send_error(f"Oh no... orchestration server while processing your query.")
 
         except Exception as e:
-            logger.exception(f"Unhandled orchestrator error: {e}")
-            await sse_stream.send_error(
-                f"Hmm... something went wrong while processing your query."
-            )
+            logger.exception(f"❌ Unhandled orchestrator error: {e}")
+            # await sse_stream.send_error(f"Internal error: {str(e)}")
+            await sse_stream.send_error(f"Hmm... something went wrong while processing your query.")
 
         finally:
+            # Important: close here to unblock endpoint's `async for`
             await sse_stream.close()

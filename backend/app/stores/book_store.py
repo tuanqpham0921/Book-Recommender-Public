@@ -8,7 +8,8 @@ from .utils import (
     build_title_search,
     build_isbn_search,
     build_filtered_search,
-    build_embedding_search
+    build_embedding_search,
+    compile_sql
 )
 
 class BookStore(BaseStore[BookModel]):
@@ -16,12 +17,22 @@ class BookStore(BaseStore[BookModel]):
 
     def __init__(self, session: AsyncSession):
         super().__init__(session, BookModel)
+        
+    async def _execute_statement(self, stmt):
+        try:
+            print("------ STMT ------")
+            print(compile_sql(stmt))
+            print("------------------")
+            result = await self.session.execute(stmt)
+            return result
+        except Exception as e:
+            raise e
 
     async def get_by_isbn(self, isbn: str) -> List[Dict[str, Any]]:
         """Get a single book by ISBN-13"""
         
         stmt = build_isbn_search(self.model, isbn)
-        result = await self.session.execute(stmt)
+        result = await self._execute_statement(stmt)
         row = result.scalars().first()
         return [self.row_to_dict(row)] if row else None
 
@@ -31,7 +42,7 @@ class BookStore(BaseStore[BookModel]):
         """Search books by title with fuzzy matching."""
         
         stmt = build_title_search(self.model, title, authors, limit, similarity_threshold)
-        result = await self.session.execute(stmt)
+        result = await self._execute_statement(stmt)
         rows = result.scalars().all()
         return [self.row_to_dict(row) for row in rows]
     
@@ -42,7 +53,7 @@ class BookStore(BaseStore[BookModel]):
         """Search books using structured filters."""
         
         stmt = build_filtered_search(self.model, filters)
-        result = await self.session.execute(stmt)
+        result = await self._execute_statement(stmt)
         rows = result.scalars().all()
         return [self.row_to_dict(row) for row in rows]
 
@@ -96,7 +107,7 @@ class BookStore(BaseStore[BookModel]):
             limit
         )
         
-        result = await self.session.execute(stmt)
+        result = await self._execute_statement(stmt)
         rows = result.all()
         
         # Convert to dicts and include similarity scores

@@ -1,0 +1,89 @@
+services:
+  # Caddy web server (reverse proxy)
+  caddy:
+    image: caddy:2-alpine
+    container_name: book-rec-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"          # HTTP
+      - "443:443"        # HTTPS
+      - "2019:2019"      # Caddy admin API
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+    networks:
+      - book-rec-network
+
+  app:
+    build: .
+    container_name: book-rec-app
+    restart: unless-stopped
+    depends_on:
+      - redis
+      - postgres
+    environment:
+      - ALLOW_ORIGINS
+      - OPENAI_API_KEY
+      - MODEL
+      - EMBEDDING_MODEL
+      - EMBEDDING_DIMENSIONS
+      - REDIS_HOST
+      - REDIS_PORT
+      - DATA_DIR
+      - EXPORT_DIR
+      - POSTGRES_HOST
+      - POSTGRES_PORT
+      - POSTGRES_DB
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+    # Remove port exposure since Caddy will handle it
+    # ports:
+    #   - "8000:8000"
+    networks:
+      - book-rec-network
+
+  redis:
+    image: redis/redis-stack-server:latest
+    container_name: book-rec-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    environment:
+      - REDIS_ARGS=--save 600 1 --save 300 10 --save 60 100
+    networks:
+      - book-rec-network
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: book-rec-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - book-rec-network
+
+networks:
+  book-rec-network:
+    driver: bridge
+
+volumes:
+  caddy_data:
+  caddy_config:
+  redis_data:
+  postgres_data:

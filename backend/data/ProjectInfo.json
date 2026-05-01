@@ -1,0 +1,236 @@
+{
+  "developer_contact": {
+    "name": "Tuan Pham",
+    "email": "tuanqpham0921@gmail.com",
+    "portfolio": "https://tuanqpham0921.com",
+    "linkedin": "https://www.linkedin.com/in/tuanqpham0921/",
+    "github": "https://github.com/tuanqpham0921",
+    "resume": "https://tuanqpham0921.com/resume"
+  },
+  "project_general": {
+    "name": "Book Recommender",
+    "description": "A conversational book recommender powered by AI that provides personalized book suggestions using semantic search, remembering user preferences and filtering capabilities.\n\nThe project can also answer questions about the project itself, including tech stack details and developer notes. All in one place (everything you need to know about the project)!",
+    "purpose": "To help users discover books that match their interests without having to search through countless titles or search recommendations from other sources, answering development questions about the project, and showcase AI integration with structured data.",
+    "version": "3.0.0",
+    "github": "https://github.com/tuanqpham0921/Book-Recommender",
+    "datasets": {
+      "books_data": "Kaggle Books dataset",
+      "size": "7,000 public domain book records",
+      "fields": "Title, author, description, ratings, categories, publication data",
+      "link": "https://www.kaggle.com/datasets/dylanjcastillo/7k-books-with-metadata",
+      "version_usage": [
+        "v1.0.0",
+        "v2.0.0",
+        "v3.0.0"
+      ]
+    },
+    "features": [
+      "Semantic search that finds books using natural language descriptions - search by themes, topics, or plot elements rather than just keywords",
+      "Comprehensive filtering system for precise book discovery - search by title, author, ISBN13, category, publication year, ratings, and more",
+      "Intelligent user preference management - get, update, add to, or clear your reading preferences to receive personalized recommendations",
+      "Database insights and statistics - explore the book collection with detailed information about available titles, genres, and authors",
+      "Conversational AI interface that understands natural language queries and provides contextual responses",
+      "Project knowledge system that can answer questions about the tech stack, architecture, features, and development details"
+    ]
+  },
+  "version_history": {
+    "v3.0.0": {
+      "general_information": {
+        "current": true,
+        "release_date": "Sep 21, 2025",
+        "link": "https://tuanqpham0921.com/book-recommender",
+        "blog": "https://tuanqpham0921.com/Book-Recommender/blog",
+        "summary": [
+          "Retrieval-Augmented Generation (RAG) architecture for combining AI with structured data for full conversational assistant responses",
+          "Inspiration from Creating a React Frontend for an AI Chatbot by codeawake \n blog_link: https://medium.com/@codeawake/ai-chatbot-frontend-1823b9c78521 \n license: MIT License granted for re-use",
+          "Complete rewrite with FastAPI backend for maintainability and performance",
+          "Advanced semantic search using vector embeddings with PostgreSQL pgvector instead of just OpenAI embeddings",
+          "Chat caching management with Redis for performance optimization",
+          "Comprehensive logging and debugging tools",
+          "Improved UX/UI design for better user experience (auto scrolling, loading spinners, error handling, real-time streaming responses with Server-Sent Events)",
+          "Improved UX/UI using Tailwind CSS for a modern and responsive design for PC and mobile",
+          "Integrated a backend using PostgreSQL to store books and separated from Docker container",
+          "Hosted on Google Cloud VM with Caddy server instead of Google Cloud Run for chat session consistency",
+          "No user authentication or personalized profiles, single session support, limited semantic search dataset"
+        ]
+      },
+      "tech_stack": {
+        "frontend": "React + JavaScript + HTML/CSS/JavaScript + Tailwind CSS + Firebase Hosting",
+        "backend": "FastAPI + Python",
+        "database": "PostgreSQL + pgvector (embedding) + OpenAI (prompts and responses)",
+        "caching": "Redis",
+        "ai_ml": "OpenAI GPT-4 (mini) + text-embedding-3-large",
+        "containerization": "Docker + Docker Compose",
+        "cloud_deployment": "Google Cloud VM + Caddy",
+        "dependency_management": "Poetry",
+        "data_schema": "Pydantic + Parquet",
+        "developer_notes": [
+          "In this version, I completed re-architecting the system to implement an external database (PostgreSQL) and caching (Redis) instead of relying on in-memory storage within Docker containers. This change enhances data persistence and scalability, allowing the application to handle larger datasets and more concurrent users effectively.",
+          "I chose to use Redis for caching to store the chat messages and chat sessions efficiently. I decided the books database and embeddings will be too large for Redis, so I kept them in PostgreSQL.",
+          "Postgres is ideal for this use case because it can handle structured data like books (title, author, genre, description) and store vector embeddings.",
+          "Using PostgreSQL with the pgvector extension allows for better fuzzy search capabilities and scalability, reducing hallucinations and improving recommendation accuracy.",
+          "Since the cold start time on Google Cloud Run was long and in-memory storage was lost across users, I decided to switch to Google Cloud VM with Caddy server for better performance and user experience.",
+          "I redesigned the frontend using Tailwind CSS to create a more modern and responsive user interface that's also easier to maintain. This involved reworking the layout, color scheme, and interactive elements to enhance usability and aesthetics.",
+          "I kept the Docker containerization and compose for deployment and development simplicity and portability.",
+          "I also switched to using Poetry for dependency management instead of pip and requirements.txt for better version control and environment management.",
+          "There's also real-time streaming responses using Server-Sent Events (SSE) for a more conversational user experience."
+        ]
+      },
+      "architecture": {
+        "pattern": "RAG (Retrieval-Augmented Generation)",
+        "description": "Combines AI language models with structured data retrieval for accurate, contextual responses",
+        "components": {
+          "rag_assistant": "Core orchestrator managing conversation flow and tool execution",
+          "tool_system": "Modular tools for book search, filtering, and user preference management",
+          "session_management": "Stateful conversation tracking with Redis persistence",
+          "vector_search": "Semantic similarity search using embeddings and pgvector"
+        },
+        "data_flow": [
+          "Prerequisites: Start PostgreSQL and load book data into vector representations stored in PostgreSQL",
+          "Prerequisites: Start Redis for caching chat sessions and messages creating a unique chat ID",
+          "1. User sends query via API, which will embed the query, check Redis for chat history, and retrieve current session state",
+          "2. RAG Assistant processes request and selects appropriate tools",
+          "3. Tools query PostgreSQL for book data or Redis for session state",
+          "4. Results are processed and streamed back via SSE",
+          "5. Chat messages are cached in Redis for context in future interactions and will live for 1 hour"
+        ]
+      }
+    },
+    "v2.0.0": {
+      "general_information": {
+        "current": false,
+        "release_date": "Aug 18, 2025",
+        "demo_available": true,
+        "link": "https://tuanqpham0921.com/book-recommender-v2",
+        "blog": "https://medium.com/@tuanqpham0921/book-recommender-v2-blog-d1f57fdc2fcf",
+        "summary": [
+          "Smart Filtering integration using AI for more flexible user queries",
+          "Able to handle single query with multiple filters and criteria (e.g., A book about space exploration with less than 300 pages and positive tone)",
+          "Built a smart filtering system using AI instead of relying on a fixed set of predefined options",
+          "Choose a lightweight, cost-effective model that runs well on CPU without needing a GPU",
+          "Designed and tested prompts with simple validation to make sure the filters work as expected",
+          "Version 2 still requires exact spelling — it doesn't infer meaning from vague or misspelled queries",
+          "Improving flexibility and making the system more forgiving is planned for the next version",
+          "No database (database in Docker) or caching integration, no user feedback collection, Google Cloud Run deployment with cold start performance"
+        ]
+      },
+      "tech_stack": {
+        "frontend": "React + JavaScript + HTML/CSS/JavaScript + Firebase Hosting",
+        "backend": "FastAPI + Python + LangChain",
+        "database": "ChromaDB (in Docker)",
+        "ai_ml": "OpenAI (lightweight model) + HuggingFace model (zero-shot classification and Sentiment analysis)",
+        "containerization": "Docker",
+        "cloud_deployment": "Google Cloud Run",
+        "data_schema": "Pydantic + Parquet",
+        "development_environment": "Google Colab + Jupyter Notebooks",
+        "developer_notes": [
+          "My initial option for AI model was the state-of-the-art, open-sourced StarCoder model. However, the model was far larger than what I needed — around 70GB just to download. Running StarCoder on Google Cloud Platform would have cost me over $100 per month for deployment, which was not sustainable given my budget.",
+          "I experimented with smaller models such as Mistral-7B-Instruct-v0.3. While lighter than StarCoder, it was still relatively large and too expensive to keep running.",
+          "To make my model more cost-effective, I then shifted my focus toward models that could operate on CPU only, trying options like Qwen2.5–1.5B and llama.cpp. However, they lacked accuracy and speed",
+          "So I decided to go with a lightweight OpenAI model instead, which is more cost-effective and easier to deploy. At roughly $0.15 per million input tokens, it fits my budget much better.",
+          "I also used ChromaDB in Docker for vector storage, Pydantic models, and Parquet for data storage, which was similar to the previous version."
+        ]
+      },
+      "architecture": {
+        "pattern": "Smart Filtering with AI",
+        "description": "Use AI to interpret and apply user-defined filters dynamically, enhancing search flexibility",
+        "components": {
+          "Filtering": "Use OpenAI model to parse and apply user-defined filters",
+          "Embedding": "Use ChromaDB for book vector and embedding the user queries"
+        },
+        "data_flow": [
+          "Prerequisites: Embed book descriptions into vector representations stored in ChromaDB persistence",
+          "1. User sends query via API",
+          "2. Backend processes request, uses AI model to extract and populate filters schema by (authors, Fiction/Nonfiction, Tone, Maximum Page Number...)",
+          "3. Log results and filtering process to ensure accuracy",
+          "4. Apply the filters to the vector search query to ChromaDB to help narrow down results",
+          "5. Results are processed and sent back to user"
+        ]
+      }
+    },
+    "v1.0.0": {
+      "general_information": {
+        "current": false,
+        "release_date": "Aug 6, 2025",
+        "demo_available": true,
+        "link": "https://tuanqpham0921.com/book-recommender-v1",
+        "blog": "https://medium.com/@tuanqpham0921/book-recommender-project-347a85a9d4ea",
+        "summary": [
+          "Initial release to find books based on simple descriptions with predefined filters (e.g., a space exploration book)",
+          "Followed Youtube tutorial:  Build a Semantic Book Recommender (Python, OpenAI, LangChain, Gradio) by freeCodeCamp.orgs \n youtube_link: https://www.youtube.com/watch?v=Q7mS1VHm3Yw",
+          "Cleaned and processed the books database into vector embeddings to support user queries and surface similar titles",
+          "Designed a search input that accepts simple descriptions with predefined filters (e.g., Fiction/Nonfiction, Tone, Maximum Page Number)",
+          "Implemented basic backend testing and validation to verify AI model functionality",
+          "Limited testing and no database (database in Docker) or caching integration, no user feedback collection, Google Cloud Run deployment with cold start performance issues"
+        ]
+      },
+      "tech_stack": {
+        "frontend": "React + JavaScript + HTML/CSS/JavaScript + Firebase Hosting",
+        "backend": "FastAPI + Python + LangChain",
+        "database": "ChromaDB (in Docker)",
+        "ai_ml": "OpenAI embeddings + HuggingFace model (zero-shot classification and Sentiment analysis)",
+        "containerization": "Docker",
+        "cloud_deployment": "Google Cloud Run",
+        "data_schema": "Pydantic + Parquet",
+        "development_environment": "Google Colab + Jupyter Notebooks",
+        "developer_notes": [
+          "I chose Google Cloud Run because it’s relatively simple to use and has a generous free tier. I containerized the app using Docker, which sped up the deployment process and made it portable.",
+          "I chose Google Colab because it’s free, requires no installation, and gives me access to GPUs out of the box. Mounting my Google Drive was enough to get the job done, and while it wasn't as seamless as using multiple notebooks locally, it's better than paying for Vertex AI or spinning up expensive cloud infrastructure.",
+          "I initially deployed with Gradio, which is great for prototyping, but I decided to switch to FastAPI for a more professional setup.",
+          "Switching to FastAPI also meant learning Pydantic for data validation. At first, the type errors were annoying, but in hindsight, they forced me to define my data structures more clearly, which made the backend more robust.",
+          "I briefly considered using PostgreSQL or a full database backend, but for the current scale of the project, it felt like overkill for now.",
+          "I chose to use Parquet for data storage because I wanted to keep my Docker image size small and reduce cold start time."
+        ]
+      },
+      "architecture": {
+        "pattern": "Simple User Query with Predefined Filters",
+        "description": "User queries with predefined filters for book recommendations",
+        "components": {
+          "Filtering": "Apply the predefined filters to the vector search query",
+          "Embedding": "Use ChromaDB for book vector and embedding the user queries"
+        },
+        "data_flow": [
+          "Prerequisites: Embed book descriptions into vector representations stored in ChromaDB persistence",
+          "1. User sends query via API and selects predefined filters (e.g., Fiction/Nonfiction, Tone, Maximum Page Number)",
+          "2. Backend processes request, applies the filters to the vector search query to ChromaDB to recommend books",
+          "3. Results are processed and sent back to user"
+        ]
+      }
+    }
+  },
+  "acknowledgments": {
+    "inspirations": [
+      {
+        "source": "freeCodeCamp - Build a Semantic Book Recommender",
+        "author": "freeCodeCamp.org",
+        "url": "https://www.youtube.com/watch?v=Q7mS1VHm3Yw",
+        "description": "Initial tutorial that guided v1.0.0 development using Python, OpenAI, LangChain, and Gradio",
+        "version_influenced": "v1.0.0"
+      },
+      {
+        "source": "Creating a React Frontend for an AI Chatbot",
+        "author": "codeawake",
+        "url": "https://medium.com/@codeawake/ai-chatbot-frontend-1823b9c78521",
+        "license": "MIT License granted for re-use",
+        "description": "React frontend architecture and design patterns for conversational AI interfaces",
+        "version_influenced": "v3.0.0"
+      }
+    ]
+  },
+  "roadmap": {
+    "v4.0.0": {
+      "planned_features": [
+        "User authentication and personalized profiles",
+        "Book rating and review system",
+        "Advanced recommendation algorithms using collaborative filtering",
+        "Multi-language support for international users",
+        "Mobile application (React Native)",
+        "Social features and book clubs",
+        "Integration with external book APIs (Goodreads, Google Books) for new releases and reviews",
+        "Advanced analytics dashboard for usage insights"
+      ],
+      "target_date": "Q1 2026",
+      "status": "Planning phase"
+    }
+  }
+}

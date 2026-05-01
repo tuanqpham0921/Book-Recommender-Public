@@ -16,52 +16,24 @@ logger = logging.getLogger(__name__)
 
 
 class OpenAIClient(BaseLLMClient):
-    """
-    Async client for OpenAI API with streaming support.
-    """
-
     def __init__(
         self,
         api_key: str,
     ):
         self.client = AsyncOpenAI(api_key=api_key)
-
-    async def get_embedding(
-        self,
-        input,
-        model=settings.openai.EMBEDDING_MODEL,
-        dimensions=settings.openai.EMBEDDING_DIMENSIONS,
-    ):
-        """
-        Generate embeddings for input text.
-
-        Args:
-            input: Text to embed
-            model: Embedding model name
-            dimensions: Embedding vector dimensions
-
-        Returns:
-            Embedding vector
-        """
-        res = await self.client.embeddings.create(
-            input=input, model=model, dimensions=dimensions
-        )
+    
+    async def get_embedding(self, 
+                            input, 
+                            model=settings.openai.EMBEDDING_MODEL, 
+                            dimensions=settings.openai.EMBEDDING_DIMENSIONS):
+        res = await self.client.embeddings.create(input=input, model=model, dimensions=dimensions)
         return res.data[0].embedding
 
     async def estimate_tokens(self, payload) -> int:
-        """Estimate token count for payload (not implemented)."""
         pass
 
     async def execute(self, req: OpenAIRequest) -> AssistantMessage:
-        """
-        Execute chat completion request with optional streaming.
-
-        Args:
-            req: OpenAI request configuration
-
-        Returns:
-            AssistantMessage with response content and metadata
-        """
+        # --- Preflight ---
         try:
             payload = req.to_payload()
 
@@ -78,45 +50,30 @@ class OpenAIClient(BaseLLMClient):
                 elapsed=elapsed,
             )
 
+            # --- Execute ---
             return assistant_msg
         except Exception as e:
-            logger.error(f"OpenAI API call failed: {e}")
+            logger.error(f"❌❌❌ OpenAI API call failed: {e}")
             raise e
 
     async def _chat_stream(self, payload: dict, sse_stream: Optional[SSEStream]):
-        """
-        Stream chat completion and send deltas to SSE stream if provided.
-
-        Args:
-            payload: OpenAI API payload
-            sse_stream: Optional SSE stream for real-time updates
-
-        Returns:
-            Final completion message
-        """
         async with self.client.beta.chat.completions.stream(**payload) as stream:
             async for event in stream:
                 if event.type == "content.delta" and sse_stream:
                     await sse_stream.send_chars(data=event.delta)
 
             final_completion = await stream.get_final_completion()
+            # print_json(final_completion.model_dump(), "Final Completion")
 
+        # one section is done
         return final_completion
 
     async def close(self):
-        """Close the underlying HTTP client."""
         await self.client._client.aclose()
 
     async def _smoke_api_call(self, sse_stream: SSEStream):
-        """
-        Test OpenAI API connectivity with a simple call.
-
-        Args:
-            sse_stream: Stream for status updates
-
-        Returns:
-            True if API is responsive
-        """
+        """Simple test call to verify LLM API connectivity."""
+        # for seing if it's taking a long time
         await sse_stream.send_ui_loading("Smoke screening openAI...")
 
         system_message = SystemMessage(
@@ -131,6 +88,6 @@ class OpenAIClient(BaseLLMClient):
             max_tokens=50,
             sse_stream=sse_stream,
         )
-
+        
         response = await self.execute(req)
         return response.content.strip().lower() == "yes"

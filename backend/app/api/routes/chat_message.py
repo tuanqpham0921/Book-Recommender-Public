@@ -63,7 +63,9 @@ async def chat(
                 except Exception as e:
                     logger.exception(f"❌ Orchestration error at endpoint: {e}")
                     # await sse_stream.send_error(f"Endpoint orchestration error: {str(e)}")
-                    await sse_stream.send_error(f"Um... something went wrong with the network endpoint.")
+                    await sse_stream.send_error(
+                        "Something went wrong while processing your request."
+                    )
                 finally:
                     logger.info("🔚 Endpoint cleanup: closing SSE stream")
                     await sse_stream.close()
@@ -73,12 +75,12 @@ async def chat(
                 logger.exception(f"❌ Failed to create SSE stream: {e}")
                 yield {
                     "event": "error",
-                    "data": f'{{"error": "No... failed to initialize your request"}}',
+                    "data": '{"error": "Failed to initialize the request."}',
                 }
 
         return EventSourceResponse(
             generate_chat_response(),
-            media_type="text/plain",
+            media_type="text/event-stream",
             headers={
                 "Cache-Control": "no-cache",
                 # "Connection": "keep-alive",

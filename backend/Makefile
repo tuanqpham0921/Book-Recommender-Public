@@ -1,4 +1,6 @@
 # Variables
+MAKEFILE_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+ENV_FILE := $(MAKEFILE_DIR)/config/.env
 REDIS_CONTAINER = book-rec-redis
 POSTGRES_CONTAINER = book-rec-postgres
 CADDY_CONTAINER = book-rec-caddy
@@ -30,7 +32,7 @@ dev:
 
 # Local development (databases + native FastAPI)
 dev-local-db:
-	docker compose up postgres redis -d
+	docker compose --env-file $(ENV_FILE) -f infra/docker-compose.yml up postgres redis -d
 	@echo "Databases started. Run 'poetry run fastapi dev app/main.py' to start API"
 
 # Development with Caddy proxy

@@ -7,6 +7,58 @@ from tqdm import tqdm
 from app.db import postgres
 from app.clients.openai_client import OpenAIClient
 from app.config import settings
+import logging
+logger = logging.getLogger(__name__)
+
+async def setup_postgres_db(pool):
+    """Create database tables and enable pgvector extension."""
+    if pool is None:
+        raise RuntimeError("Postgres pool is not initialized")
+
+    async with pool.acquire() as conn:
+        try:
+            async with conn.transaction():  # ✅ all-or-nothing
+                await conn.execute("DROP TABLE IF EXISTS books;")
+                await conn.execute(
+                    f"""
+                    CREATE TABLE books (
+                        isbn13 TEXT PRIMARY KEY,
+                        title TEXT NOT NULL,
+                        authors TEXT,
+                        categories TEXT,
+                        genre TEXT,
+                        description TEXT,
+                        published_year INTEGER,
+                        average_rating FLOAT,
+                        num_pages INTEGER,
+                        ratings_count INTEGER,
+                        thumbnail TEXT,
+                        large_thumbnail TEXT,
+                        title_and_subtiles TEXT,
+                        anger FLOAT DEFAULT 0.0,
+                        disgust FLOAT DEFAULT 0.0,
+                        fear FLOAT DEFAULT 0.0,
+                        joy FLOAT DEFAULT 0.0,
+                        sadness FLOAT DEFAULT 0.0,
+                        surprise FLOAT DEFAULT 0.0,
+                        neutral FLOAT DEFAULT 0.0,
+                        is_children BOOLEAN DEFAULT FALSE,
+                        embedding VECTOR({settings.openai.EMBEDDING_DIMENSIONS})
+                    );
+                """
+                )
+                await conn.execute(
+                    """
+                    CREATE INDEX books_embedding_idx 
+                    ON books USING ivfflat (embedding vector_cosine_ops)
+                    WITH (lists = 100);
+                """
+                )
+            logger.info("✅ PostgreSQL database setup completed successfully!")
+        except Exception as e:
+            logger.error(f"❌ Error setting up database: {e}")
+            raise
+
 
 # TODO: this is wrong, need to changeto have the full list of columns (21)
 # from deving, idk where is the legacy code for this

@@ -38,20 +38,3 @@ async def close_postgres(pool):
     if pool:
         await pool.close()
         logger.info("🛑 Postgres closed")
-
-
-async def clear_postgres_db(pool):
-    """Clear all data from PostgreSQL database."""
-    if pool is None:
-        raise RuntimeError("Postgres pool is not initialized")
-
-    async with pool.acquire() as conn:  # ✅ borrow from pool
-        try:
-            await conn.execute("DROP TABLE IF EXISTS books;")
-            logger.info("PostgreSQL database cleared successfully")
-        except Exception as e:
-            logger.error(f"Error clearing PostgreSQL database: {e}")
-            raise
-
-
-

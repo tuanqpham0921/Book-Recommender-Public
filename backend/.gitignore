@@ -12,7 +12,6 @@ config/*.yaml
 !config/env-vars.yaml.example
 
 infra/scripts/
-*.sql
 
 # Data & Exports
 *.csv

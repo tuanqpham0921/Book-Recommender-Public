@@ -46,6 +46,7 @@ async def init_sqlalchemy():
             connect_args=connect_args,
         )
 
+        # TODO: Move this to a separate function
         # Test connection and setup pgvector
         async with _sqlalchemy_engine.begin() as conn:
             # Test connection

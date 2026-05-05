@@ -13,7 +13,6 @@ async def init_postgres():
     try:
 
         async def init_conn(conn):
-            await conn.execute("CREATE EXTENSION IF NOT EXISTS vector")
             await register_vector(conn)
 
         pool = await asyncpg.create_pool(

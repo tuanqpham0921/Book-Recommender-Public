@@ -106,7 +106,7 @@ async def init_sqlalchemy():
         return None, None
 
 
-async def close(_sqlalchemy_engine):
+async def close_sqlalchemy(_sqlalchemy_engine):
     """Close global SQLAlchemy engine."""
 
     if _sqlalchemy_engine:

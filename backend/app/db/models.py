@@ -1,4 +1,4 @@
-# SQLAlchemy models for books domain
+# SQLAlchemy models (shared by stores / DB layers)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, Float, Text, Boolean
 from pgvector.sqlalchemy import Vector
@@ -11,9 +11,6 @@ class BookModel(Base):
 
     __tablename__ = "books"
 
-    # Primary key
-    # id = Column(Integer, primary_key=True, index=True)
-
     # Book identifiers
     isbn13 = Column(String(13), primary_key=True, index=True)
 
@@ -22,11 +19,9 @@ class BookModel(Base):
     authors = Column(String, nullable=True, index=True)
     categories = Column(String, nullable=True)
     description = Column(Text, nullable=True)
-    
+
     # description embedding
     embedding = Column(Vector(1024), nullable=True)
-    # title_embedding = Column(Vector(1536), nullable=True)
-    # combined_embedding = Column(Vector(1536), nullable=True)
 
     # Publication details
     published_year = Column(Integer, nullable=True, index=True)
@@ -42,16 +37,12 @@ class BookModel(Base):
 
     # Search and recommendation fields
     genre = Column(String(100), nullable=True, index=True)
-    
+
     thumbnail = Column(String, nullable=True)
     ratings_count = Column(Integer, nullable=True)
-    
-    # TODO: missing embedding columns
 
     def __repr__(self):
-        return (
-            f"<BookModel(isbn13='{self.isbn13}', title='{self.title}')>"
-        )
+        return f"<BookModel(isbn13='{self.isbn13}', title='{self.title}')>"
 
     def to_dict(self) -> dict:
         """Convert model to dictionary."""

@@ -2,7 +2,7 @@ from typing import List, Optional, Any, Dict
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.domains.books.schemas.request_schemas import BooksFilter
 
-from app.domains.books.models import BookModel
+from app.db.models import BookModel
 from .base_store import BaseStore
 from .utils import (
     build_title_search,

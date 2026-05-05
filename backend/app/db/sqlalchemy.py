@@ -58,7 +58,7 @@ async def init_sqlalchemy():
             logger.info("✅ pgvector extension enabled")
 
             # Import models to ensure they're registered
-            from app.domains.books.models import BookModel, Base
+            from app.db.models import BookModel, Base
 
             # Create tables if they don't exist (for development)
             # In production, you should use Alembic migrations

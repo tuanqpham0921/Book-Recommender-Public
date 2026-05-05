@@ -5,17 +5,22 @@ import pandas as pd
 from tqdm import tqdm
 
 from app.db import postgres
+from app.db.models import BookModel
 from app.clients.openai_client import OpenAIClient
 from app.config import settings
 import logging
 logger = logging.getLogger(__name__)
 
 
-# TODO: this is wrong, need to changeto have the full list of columns (21)
-# from deving, idk where is the legacy code for this
-BOOK_COLUMNS = """isbn13, title, authors, categories, genre, description, published_year,
-                 average_rating, num_pages, ratings_count, thumbnail, large_thumbnail,
-                 title_and_subtiles, anger, disgust, fear, joy, sadness, surprise, neutral"""
+# Columns we insert from `book_chunk` (embedding is inserted separately).
+# We exclude `embedding` and `is_children` because the loader currently doesn't
+# populate them (schema default for `is_children` will apply).
+BOOK_INSERT_COLUMNS = [
+    c.name
+    for c in BookModel.__table__.columns
+    if c.name not in ("embedding", "is_children")
+]
+BOOK_INSERT_COLUMNS_SQL = ", ".join(BOOK_INSERT_COLUMNS)
 
 
 def clean_numeric_value(value):
@@ -37,47 +42,19 @@ def batchify(iterable, batch_size):
 # Book storage operations
 async def store_books_batch(conn, books_batch):
     """Store a batch of books in PostgreSQL."""
-    try:
-        # Prepare the INSERT statement
-        insert_query = f"""
-            INSERT INTO books (
-                {BOOK_COLUMNS}, embedding
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 
-                     $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
-            ON CONFLICT (isbn13) DO NOTHING
-        """
+    # Prepare the INSERT statement once per call.
+    # Placeholders are $1..$N (asyncpg positional parameters).
+    n = len(BOOK_INSERT_COLUMNS)
+    placeholders = ", ".join([f"${i}" for i in range(1, n + 2)])  # +1 for embedding
+    insert_query = f"""
+        INSERT INTO books ({BOOK_INSERT_COLUMNS_SQL}, embedding)
+        VALUES ({placeholders})
+        ON CONFLICT (isbn13) DO NOTHING
+    """
 
-        # Insert each book in the batch
-        # TODO: use Models.py to insert the books
-        for book in books_batch:
-            await conn.execute(
-                insert_query,
-                book["isbn13"],
-                book["title"],
-                book["authors"],
-                book["categories"],
-                book["genre"],
-                book["description"],
-                book["published_year"],
-                book["average_rating"],
-                book["num_pages"],
-                book["ratings_count"],
-                book["thumbnail"],
-                book["large_thumbnail"],
-                book["title_and_subtiles"],
-                book["anger"],
-                book["disgust"],
-                book["fear"],
-                book["joy"],
-                book["sadness"],
-                book["surprise"],
-                book["neutral"],
-                book["embedding"],
-            )
-
-    except Exception as e:
-        print(f"Error storing books batch: {e}")
-        raise
+    for book in books_batch:
+        values = [book[col] for col in BOOK_INSERT_COLUMNS] + [book["embedding"]]
+        await conn.execute(insert_query, *values)
 
 
 # Book loading and data preparation
@@ -110,6 +87,19 @@ async def load_books_from_csv(csv_path="data/books.csv", limit=None):
         # with defaults values for the missing columns
         for idx, row in df.iterrows():
             if pd.notna(row["title"]) and pd.notna(row["description"]):
+                emotion_cols = [
+                    "anger",
+                    "disgust",
+                    "fear",
+                    "joy",
+                    "sadness",
+                    "surprise",
+                    "neutral",
+                ]
+                emotions = {
+                    col: clean_numeric_value(row.get(col)) or 0.0
+                    for col in emotion_cols
+                }
                 book_chunk = {
                     "isbn13": str(row.get("isbn13", "")),
                     "title": str(row["title"]),
@@ -136,13 +126,7 @@ async def load_books_from_csv(csv_path="data/books.csv", limit=None):
                     "thumbnail": str(row.get("thumbnail", "")),
                     "large_thumbnail": str(row.get("large_thumbnail", "")),
                     "title_and_subtiles": str(row.get("title_and_subtiles", "")),
-                    "anger": clean_numeric_value(row.get("anger")) or 0.0,
-                    "disgust": clean_numeric_value(row.get("disgust")) or 0.0,
-                    "fear": clean_numeric_value(row.get("fear")) or 0.0,
-                    "joy": clean_numeric_value(row.get("joy")) or 0.0,
-                    "sadness": clean_numeric_value(row.get("sadness")) or 0.0,
-                    "surprise": clean_numeric_value(row.get("surprise")) or 0.0,
-                    "neutral": clean_numeric_value(row.get("neutral")) or 0.0,
+                    **emotions,
                 }
                 books.append(book_chunk)
 
@@ -176,7 +160,7 @@ async def load_books_from_csv(csv_path="data/books.csv", limit=None):
         return []
 
 
-async def embed_and_store_books(books, batch_size=10):
+async def embed_and_store_books(books, pool, batch_size=10):
     """Create embeddings and store books in PostgreSQL using connection pool."""
 
     if not books:
@@ -185,11 +169,6 @@ async def embed_and_store_books(books, batch_size=10):
 
     # Initialize OpenAI client
     openai_client = OpenAIClient(api_key=settings.openai.API_KEY)
-
-    # Ensure PostgreSQL pool is initialized
-    pool = await postgres.init_postgres()
-    if not pool:
-        raise RuntimeError("Failed to initialize PostgreSQL connection pool")
 
     try:
         print(f"\nEmbedding and storing {len(books)} books in batches of {batch_size}")
@@ -247,38 +226,36 @@ async def embed_and_store_books(books, batch_size=10):
         print(f"Error during book embedding and storage: {e}")
         raise
     finally:
-        # Close clients
+        # Close clients (pool is owned by the caller)
         await openai_client.close()
-        await postgres.close_postgres(pool)
 
 
-async def load_books():
-    """Main function to load books from CSV into PostgreSQL."""
+async def load_books(*, reset: bool = True):
+    """Main function to load books from CSV/Parquet into PostgreSQL."""
+    pool = None
     try:
-        # Initialize PostgreSQL connection pool
         pool = await postgres.init_postgres()
         if not pool:
             raise RuntimeError("Failed to initialize PostgreSQL connection pool")
 
-        # Setup PostgreSQL database
-        await postgres.setup_postgres_db(pool)
+        if reset:
+            # Matches the old loader behavior (DROP/CREATE before full load).
+            await postgres.reset_books_table(pool)
+        else:
+            await postgres.ensure_db_schema(pool)
 
         # Load books from CSV/Parquet
         csv_path = "data/books.parquet"  # Match the Redis version
         if not os.path.exists(csv_path):
             csv_path = "data/books.csv"  # Fallback to CSV
             if not os.path.exists(csv_path):
-                print(f"Error: Neither data/books.parquet nor data/books.csv found")
+                print("Error: Neither data/books.parquet nor data/books.csv found")
                 return
 
-        books = await postgres.load_books_from_csv(
-            csv_path, limit=None
-        )  # Load all books
+        books = await load_books_from_csv(csv_path, limit=None)  # Load all books
 
         if books:
-            # Embed and store books in PostgreSQL
-            await embed_and_store_books(books, batch_size=10)
-
+            await embed_and_store_books(books, pool, batch_size=10)
             print("\nPostgreSQL book database loaded successfully!")
             print('Run "poetry run get-loader-stats" to view loading statistics.')
         else:
@@ -288,8 +265,8 @@ async def load_books():
         print(f"Error during book loading: {e}")
         raise
     finally:
-        # Close the connection pool when done
-        await postgres.close_postgres(pool)
+        if pool:
+            await postgres.close_postgres(pool)
 
 
 def main():

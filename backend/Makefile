@@ -31,8 +31,9 @@ dev:
 	poetry run fastapi dev app/main.py
 
 # Local development (databases + native FastAPI)
+# add redis to the mix
 dev-local-db:
-	docker compose --env-file $(ENV_FILE) -f infra/docker-compose.yml up postgres redis -d
+	docker compose --env-file $(ENV_FILE) -f infra/docker-compose.yml up postgres -d
 	@echo "Databases started. Run 'poetry run fastapi dev app/main.py' to start API"
 
 # Development with Caddy proxy
@@ -177,8 +178,7 @@ docker-reset:
 	docker compose up -d
 
 docker-clean:
-	docker compose down -v
-	docker compose up -d
+	docker compose -f infra/docker-compose.yml down -v
 
 # ---------------------
 # Google Cloud Platform

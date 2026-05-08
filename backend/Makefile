@@ -16,6 +16,9 @@ load:
 	make redis-clear 
 	poetry run load
 
+ingestion:
+	poetry run python ingestion/loader.py
+
 # Load books into PostgreSQL
 load-postgres:
 	poetry run load-postgres
@@ -41,10 +44,6 @@ dev-caddy:
 	docker compose up caddy app -d
 	@echo "Server running at http://localhost"
 	@echo "Caddy admin at http://localhost:2019"
-
-# Environment management
-activate:
-	poetry env activate
 
 clear-pycache:
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null
@@ -281,7 +280,7 @@ test-utils:
 test-coverage:
 	poetry run pytest tests/ --cov=app --cov-report=html --cov-report=term
 
-.PHONY: install load load-postgres dev activate redis-start redis-cli redis-clear redis-clear-chats redis-restart redis-memory redis-export-chats redis-export-chat redis-list-chats postgres-start postgres-cli postgres-status postgres-info docker-reset docker-clean ssh-gcp stop-gcp gcp-instances-list gcp-create-instance gcp-set-env ping-openai test test-verbose test-unit test-utils test-coverage
+.PHONY: install ingestion load load-postgres dev activate redis-start redis-cli redis-clear redis-clear-chats redis-restart redis-memory redis-export-chats redis-export-chat redis-list-chats postgres-start postgres-cli postgres-status postgres-info docker-reset docker-clean ssh-gcp stop-gcp gcp-instances-list gcp-create-instance gcp-set-env ping-openai test test-verbose test-unit test-utils test-coverage
 
 # NOTE: adding to poetry
 # poetry add --group dev pytest pytest-asyncio pytest-cov

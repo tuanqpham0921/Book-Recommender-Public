@@ -89,12 +89,13 @@ async def load_books_from_csv(path: str = DEVELOPMENT_DATA_PATH, limit: int | No
         print(f"Considering only the first {limit} CSV rows (limit applies to rows, not books)")
     else:
         print(f"Loading all {len(df)} rows")
+    return df
 
-    # Create book chunks for embedding
-    # TODO: need to add a function to create the book chunks
+def prepare_books(df: pd.DataFrame) -> list[BookModel]:
+    """Prepare books for embedding and storage."""
+        # Create book chunks for embedding
     books = []
 
-    # TODO: need to this better with the book model
     print("\nPreparing books for embedding")
     for idx, row in df.iterrows():
         if pd.notna(row["title"]) and pd.notna(row["description"]):
@@ -133,7 +134,6 @@ async def load_books_from_csv(path: str = DEVELOPMENT_DATA_PATH, limit: int | No
             }
             # convert to BookModel
             books.append(BookModel(**book_chunk))  
-    
     return books
 
 async def embed_and_store_books(books: list, batch_size: int = 10):
@@ -145,7 +145,6 @@ async def embed_and_store_books(books: list, batch_size: int = 10):
     total_embedded = 0
     openai_client = OpenAIClient(api_key=settings.openai.API_KEY)
     
-    # TODO: need to make this async
     with tqdm(total=len(books), desc="Embedding books", unit="book") as pbar:
         for batch in batchify(books, batch_size):
             batch_count += 1
@@ -178,7 +177,7 @@ async def embed_and_store_books(books: list, batch_size: int = 10):
                     session.add_all(embedded_batch)
                     await session.commit()
             except Exception as e:
-                print(f"Error committing batch {batch_count}: {e}")
+                print(f"Error committing batch {batch_count}")
     
     print(f"Skipped {skipped_count} books")
     print(f"Successfully embedded and stored {total_embedded}/{len(books)} books")
@@ -192,10 +191,13 @@ async def load_books():
         return
     
     print("Loading Books from CSV")
-    books = await load_books_from_csv(limit=100)
-    print(f"Loaded {len(books)} books from CSV (after title/description filter)")
+    df = await load_books_from_csv(limit=100)
+    print(f"Loaded {len(df)} books from CSV (after title/description filter)")
 
-    print("Embedding and Storing Books into PostgreSQL")
+    books = prepare_books(df)
+    print(f"Prepared {len(books)} books for embedding and storage")
+    
+    print(f"Embedding and Storing Books into PostgreSQL")
     await embed_and_store_books(books)
     print("Books embedded and stored successfully")
     

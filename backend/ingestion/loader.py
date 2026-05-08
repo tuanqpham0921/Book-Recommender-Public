@@ -16,6 +16,7 @@ from app.config import settings
 # need to add timer and optimizations
 # need to stream the csv file? or make it better
 # I think the emotion stats can be better (null)?
+# DETAIL:  Key (isbn13)=(9780002005883) already exists.
 
 # TODO: need to use the logging config from the app 
 # (with update for ingestion config)
@@ -35,7 +36,6 @@ TABLE = "books"
 CSV_FILE = "books.csv"
 LOAD_LIMIT = 5000
 DEVELOPMENT_DATA_PATH = "data/books.csv"
-INIT_SQL_FILE = "app/db/init.sql"
 
 # Create async engine using your database settings
 
@@ -46,19 +46,6 @@ def batchify(iterable, batch_size):
     """Split an iterable into batches of specified size."""
     for i in range(0, len(iterable), batch_size):
         yield iterable[i : i + batch_size]
-        
-
-async def run_init_sql() -> None:
-    # TODO: need to make this better with the init sql file (from docker compose?)
-    # then we don't need to check if the table exists
-    # and we can run add functionality 
-    raw = Path(INIT_SQL_FILE).read_text(encoding="utf-8")
-    lines = [ln for ln in raw.splitlines() if ln.strip() and not ln.strip().startswith("--")]
-    blob = "\n".join(lines)
-    statements = [s.strip() for s in blob.split(";") if s.strip()]
-    async with async_engine.begin() as conn:
-        for stmt in statements:
-            await conn.execute(text(stmt))
 
 # TODO: need to add a clean function to clean the data and remove the rows that are not valid
 def clean_numeric_value(value):
@@ -213,10 +200,6 @@ async def load_books():
     if await table_exists():
         logger.info("Skipping loading books to table.")
         return
-    
-    logger.info("Running init SQL")
-    await run_init_sql()
-    logger.info("Init SQL completed")
     
     logger.info("Loading Books from CSV")
     df = await load_books_from_csv()

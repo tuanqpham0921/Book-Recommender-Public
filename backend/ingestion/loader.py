@@ -1,11 +1,10 @@
 import os
 import asyncio
-from pathlib import Path
+import time
 import pandas as pd
 
 from tqdm import tqdm
 
-from app.db import postgres
 from app.db.models import BookModel
 from app.clients.openai_client import OpenAIClient
 from app.config import settings
@@ -13,14 +12,10 @@ from app.config import settings
 # TODO
 # need to make the ingestion in the Makefile
 # need to add function comments
-# need to add timer and optimizations
+# need to add optimizations
 # need to stream the csv file? or make it better
-# I think the emotion stats can be better (null)?
 # DETAIL:  Key (isbn13)=(9780002005883) already exists.
 
-# TODO: need to use the logging config from the app 
-# (with update for ingestion config)
-# but for now, we will use the basic logging config
 import logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -58,8 +53,6 @@ def clean_numeric_value(value):
         return None
 
 async def table_exists():
-    # TODO: need to make this only add the missing rows to the table
-    # ISBN13 is primary key so we can use that. try to have the 5000 books for dev
     async with AsyncSessionLocal() as session:        
         q_exists = text("""
             select to_regclass(:fqtn) is not null as exists_;""")
@@ -79,11 +72,6 @@ async def table_exists():
         q_count = text(f"SELECT COUNT(*) FROM {SCHEMA}.{TABLE}")
         result = await session.execute(q_count)
         row_count = int(result.scalar() or 0)
-        
-        # TODO: Uncomment this when we want to drop the table if it has less than LOAD_LIMIT rows
-        # might not be good idea to drop the table if it has less than LOAD_LIMIT rows
-        # logger.info(f"Table {SCHEMA}.{TABLE} has less than {LOAD_LIMIT} rows")
-        # await session.execute(text(f"DROP TABLE IF EXISTS {SCHEMA}.{TABLE} CASCADE"))
         
         logger.info(f"Table {SCHEMA}.{TABLE} has {row_count} rows")
         return row_count > LOAD_LIMIT
@@ -185,7 +173,7 @@ async def embed_and_store_books(books: list, batch_size: int = 10):
                     )
                     
             except Exception as e:
-                print(f"\nError processing batch {batch_count}: {e}")
+                logger.error(f"\nError processing batch {batch_count}")
                 # Update progress bar for failed books in this batch
                 pbar.update(len(batch))
                 continue
@@ -202,7 +190,7 @@ async def load_books():
         return
     
     logger.info("Loading Books from CSV")
-    df = await load_books_from_csv()
+    df = await load_books_from_csv(limit=100)
     logger.info(f"Loaded {len(df)} rows from CSV")
     
     logger.info("Embedding and Storing Books into PostgreSQL")
@@ -212,7 +200,10 @@ async def load_books():
     
 def main():
     """Entry point for the PostgreSQL loader."""
+    start = time.perf_counter()
     asyncio.run(load_books())
+    elapsed = time.perf_counter() - start
+    logger.info("Ingestion finished in %.2fs", elapsed)
 
 
 if __name__ == "__main__":

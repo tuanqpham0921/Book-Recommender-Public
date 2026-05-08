@@ -4,15 +4,8 @@ venv/
 .venv/
 
 # Environment & Config
-config/.env
-config/.env.*
+config/.env*
 !config/.env.example
-!config/.env.production
-config/*.yaml
-!config/env-vars.yaml.example
-
-infra/scripts/
 
 # Data & Exports
 *.csv
-examples/

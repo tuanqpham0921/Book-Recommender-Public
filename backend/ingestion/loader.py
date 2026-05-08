@@ -5,6 +5,7 @@ import pandas as pd
 
 from tqdm import tqdm
 
+from normalize import clean_numeric_value, prepare_books
 from app.db.models import BookModel
 from app.clients.openai_client import OpenAIClient
 from app.config import settings
@@ -39,14 +40,6 @@ def batchify(iterable, batch_size):
         yield iterable[i : i + batch_size]
 
 # TODO: need to add a clean function to clean the data and remove the rows that are not valid
-def clean_numeric_value(value):
-    """Clean and convert numeric values, return None if invalid."""
-    if pd.isna(value) or value == "" or value == "nan":
-        return None
-    try:
-        return float(value)
-    except (ValueError, TypeError):
-        return None
 
 async def table_exists():
     async with AsyncSessionLocal() as session:        
@@ -91,50 +84,7 @@ async def load_books_from_csv(path: str = DEVELOPMENT_DATA_PATH, limit: int | No
         print(f"Loading all {len(df)} rows")
     return df
 
-def prepare_books(df: pd.DataFrame) -> list[BookModel]:
-    """Prepare books for embedding and storage."""
-        # Create book chunks for embedding
-    books = []
 
-    print("\nPreparing books for embedding")
-    for idx, row in df.iterrows():
-        if pd.notna(row["title"]) and pd.notna(row["description"]):
-            book_chunk = {
-                "isbn13": str(row.get("isbn13", "")),
-                "title": str(row["title"]),
-                "authors": str(row.get("authors", "")),
-                "categories": str(row.get("categories", "")),
-                "genre": str(row.get("simple_categories", "")),
-                "description": str(row["description"]),
-                "published_year": (
-                    int(clean_numeric_value(row.get("published_year")))
-                    if clean_numeric_value(row.get("published_year"))
-                    else None
-                ),
-                "average_rating": clean_numeric_value(row.get("average_rating")),
-                "num_pages": (
-                    int(clean_numeric_value(row.get("num_pages")))
-                    if clean_numeric_value(row.get("num_pages"))
-                    else None
-                ),
-                "ratings_count": (
-                    int(clean_numeric_value(row.get("ratings_count")))
-                    if clean_numeric_value(row.get("ratings_count"))
-                    else None
-                ),
-                "thumbnail": str(row.get("thumbnail", "")),
-                "title_and_subtiles": str(row.get("title_and_subtiles", "")),
-                "anger": clean_numeric_value(row.get("anger")) or 0.0,
-                "disgust": clean_numeric_value(row.get("disgust")) or 0.0,
-                "fear": clean_numeric_value(row.get("fear")) or 0.0,
-                "joy": clean_numeric_value(row.get("joy")) or 0.0,
-                "sadness": clean_numeric_value(row.get("sadness")) or 0.0,
-                "surprise": clean_numeric_value(row.get("surprise")) or 0.0,
-                "neutral": clean_numeric_value(row.get("neutral")) or 0.0,
-            }
-            # convert to BookModel
-            books.append(BookModel(**book_chunk))  
-    return books
 
 async def embed_and_store_books(books: list, batch_size: int = 10):
     if not books:

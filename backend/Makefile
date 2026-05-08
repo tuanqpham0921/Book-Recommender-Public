@@ -1,9 +1,7 @@
 # Variables
 MAKEFILE_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 ENV_FILE := $(MAKEFILE_DIR)/config/.env
-REDIS_CONTAINER = book-rec-redis
 POSTGRES_CONTAINER = book-rec-postgres
-CADDY_CONTAINER = book-rec-caddy
 GCP_INSTANCE = book-rec-dev
 GCP_ZONE = us-central1-c
 

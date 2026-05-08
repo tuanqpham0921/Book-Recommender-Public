@@ -9,7 +9,6 @@ from app.common.enums import Role
 from app.common.utils import now_iso, save_file
 from app.common.messages import APIMessage, UserMessage, AssistantMessage, ToolMessage
 from app.clients.openai_client import OpenAIClient
-from app.state.state_manager import StateManager
 from app.stores.book_store import BookStore
 from app.common.sse_stream import SSEStream
 
@@ -26,7 +25,6 @@ class RequestContext:
 
     # Services
     llm_client: OpenAIClient = None
-    state_manager: StateManager = None
     pg_pool: asyncpg.Pool = None
     session: AsyncSession = None
     book_store: BookStore = None

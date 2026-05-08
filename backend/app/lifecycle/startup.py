@@ -3,10 +3,8 @@ import logging
 from fastapi import FastAPI
 from typing import Any
 
-from app.db import redis, postgres, sqlalchemy
+from app.db import sqlalchemy
 from config.constants import AppConfig
-from app.common.types.session import SuffixEnum, StorageType
-from app.stores import SessionStore
 from app.orchestration.orchestrator import Orchestrator
 from config.settings import settings
 from app.clients import OpenAIClient
@@ -39,27 +37,6 @@ async def start_openai_client() -> OpenAIClient:
 def start_orchestrator() -> Orchestrator:
     return Orchestrator()
 
-
-async def start_redis():
-    redis_client = await redis.init_redis()
-    await redis_client.ping()
-    store = SessionStore(
-        redis_client, prefix=AppConfig.SESSION_PREFIX, env=settings.app.ENVIRONMENT
-    )
-    store.register_many(
-        {
-            SuffixEnum.METADATA: StorageType.JSON,
-            SuffixEnum.CONVERSATION: StorageType.LIST,
-            SuffixEnum.PREFS: StorageType.JSON,
-        }
-    )
-    return redis_client, store
-
-
-async def start_postgres():
-    return await postgres.init_postgres()
-
-
 async def start_sqlalchemy_engine():
     return await sqlalchemy.init_sqlalchemy()
 
@@ -78,19 +55,6 @@ async def start_all(app: FastAPI):
     except Exception as e:
         logger.critical(f"❌ Failed to start OpenAI client: {e}")
         raise
-
-    # # Optional services
-    # redis_result = await _startup_task("Redis", start_redis, AppConfig.REDIS_TIMEOUT)
-    # if redis_result:
-    #     app.state.redis, app.state.session_store = redis_result
-    # else:
-    #     logger.warning("⚠️ Redis service not available")
-
-    app.state.pg_pool = await _startup_task(
-        "Postgres", start_postgres, AppConfig.POSTGRES_TIMEOUT
-    )
-    if not app.state.pg_pool:
-        logger.warning("⚠️ Postgres service not available")
 
     # SQLAlchemy returns tuple (engine, session_factory)
     sqlalchemy_result = await _startup_task(

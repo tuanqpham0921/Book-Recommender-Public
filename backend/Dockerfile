@@ -15,7 +15,6 @@ COPY --from=requirements-stage /tmp/requirements.txt /home/requirements.txt
 RUN pip install --no-cache-dir --upgrade -r /home/requirements.txt
 
 COPY ../app /home/app
-COPY ../data /home/data
 
 # Expose port 8000 for the FastAPI application
 EXPOSE 8000

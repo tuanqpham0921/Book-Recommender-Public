@@ -1,28 +1,9 @@
 services:
-  # Caddy web server (reverse proxy)
-  caddy:
-    image: caddy:2-alpine
-    container_name: book-rec-caddy
-    restart: unless-stopped
-    ports:
-      - "80:80"          # HTTP
-      - "443:443"        # HTTPS
-      - "2019:2019"      # Caddy admin API
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
-      - caddy_data:/data
-      - caddy_config:/config
-    depends_on:
-      - app
-    networks:
-      - book-rec-network
-
   app:
     build: .
     container_name: book-rec-app
     restart: unless-stopped
     depends_on:
-      - redis
       - postgres
     environment:
       - ALLOW_ORIGINS
@@ -30,8 +11,6 @@ services:
       - MODEL
       - EMBEDDING_MODEL
       - EMBEDDING_DIMENSIONS
-      - REDIS_HOST
-      - REDIS_PORT
       - DATA_DIR
       - EXPORT_DIR
       - POSTGRES_HOST
@@ -39,25 +18,12 @@ services:
       - POSTGRES_DB
       - POSTGRES_USER
       - POSTGRES_PASSWORD
+    # TODO: add the port exposure here (?)
     # Remove port exposure since Caddy will handle it
     # ports:
     #   - "8000:8000"
     networks:
       - book-rec-network
-
-  redis:
-    image: redis/redis-stack-server:latest
-    container_name: book-rec-redis
-    restart: unless-stopped
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    environment:
-      - REDIS_ARGS=--save 600 1 --save 300 10 --save 60 100
-    networks:
-      - book-rec-network
-
   postgres:
     image: pgvector/pgvector:pg16
     container_name: book-rec-postgres
@@ -84,7 +50,4 @@ networks:
     driver: bridge
 
 volumes:
-  caddy_data:
-  caddy_config:
-  redis_data:
   postgres_data:

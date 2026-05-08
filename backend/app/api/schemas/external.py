@@ -10,9 +10,6 @@ class ChatIn(BaseModel):
 class HealthStatus(BaseModel):
     """Health check response model."""
 
-    postgres: bool = False
-    redis: bool = False
-    openai: bool = False
     orchestrator: bool = False
     sqlalchemy_engine: bool = False
     message: str = "Service status"

@@ -29,31 +29,9 @@ async def detailed_health_check(request: Request):
     # Check services if available
     if hasattr(request.app.state, "health_status"):
         startup_status = request.app.state.health_status
-        health.postgres = startup_status.get("postgres", False)
-        health.redis = startup_status.get("redis", False)
         health.openai = startup_status.get("openai", False)
         health.orchestrator = startup_status.get("orchestrator", False)
         health.sqlalchemy_engine = startup_status.get("sqlalchemy_engine", False)
-
-    # Quick connectivity tests for active services
-    if health.redis and hasattr(request.app.state, "redis") and request.app.state.redis:
-        try:
-            await request.app.state.redis.ping()
-            health.redis = True
-        except Exception:
-            health.redis = False
-
-    if (
-        health.postgres
-        and hasattr(request.app.state, "pg_pool")
-        and request.app.state.pg_pool
-    ):
-        try:
-            async with request.app.state.pg_pool.acquire() as conn:
-                await conn.fetchval("SELECT 1")
-            health.postgres = True
-        except Exception:
-            health.postgres = False
 
     if (
         health.sqlalchemy_engine

@@ -1,5 +1,8 @@
 #!/usr/bin/env -S poetry run python
 
+# NOTE: outdated code, need to update it to the new code
+# keeping it for reference
+
 import asyncio
 import os
 import asyncpg
@@ -90,11 +93,3 @@ async def embed_authors():
 
 if __name__ == "__main__":
     asyncio.run(embed_authors())
-
-
-
-
-
-
-
-

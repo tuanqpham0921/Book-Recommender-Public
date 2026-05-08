@@ -3,6 +3,9 @@ import sys
 import json
 import asyncio
 
+# NOTE: outdated code, need to update it to the new code
+# keeping it for reference
+
 from datetime import datetime, UTC
 
 from app.db.redis import init_redis, close_redis

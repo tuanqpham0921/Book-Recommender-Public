@@ -1,7 +1,7 @@
 """ Normalize the data in the database (making it more consistent and easier to use). """
 from pypinyin import lazy_pinyin
 import pandas as pd
-from app.db.models import BookModel
+from data.models import BookModel
 
 
 def clean_numeric_value(value):

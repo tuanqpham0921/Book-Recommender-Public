@@ -6,7 +6,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from normalize import clean_numeric_value, prepare_books
-from app.db.models import BookModel
+from data.models import BookModel
 from app.clients.openai_client import OpenAIClient
 from app.config import settings
 

@@ -16,10 +16,6 @@ from app.config import settings
 # need to stream the csv file? or make it better
 # DETAIL:  Key (isbn13)=(9780002005883) already exists.
 
-import logging
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
-
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from app.config.settings import settings
@@ -63,37 +59,43 @@ async def table_exists():
         
         if not table_exists:
             # schema.table doesn't exist
-            logger.info(f"Table {SCHEMA}.{TABLE} not found")
+            print(f"Table {SCHEMA}.{TABLE} not found")
             return False
         
-        logger.info(f"Table {SCHEMA}.{TABLE} found")
+        print(f"Table {SCHEMA}.{TABLE} found")
         # 2) Does it have > LOAD_LIMIT rows?
         # Note: identifiers (schema/table) can't be bound params, so we embed them from trusted constants.
         q_count = text(f"SELECT COUNT(*) FROM {SCHEMA}.{TABLE}")
         result = await session.execute(q_count)
         row_count = int(result.scalar() or 0)
         
-        logger.info(f"Table {SCHEMA}.{TABLE} has {row_count} rows")
+        print(f"Table {SCHEMA}.{TABLE} has {row_count} rows")
         return row_count > LOAD_LIMIT
         
 
-async def load_books_from_csv(path: str = DEVELOPMENT_DATA_PATH, limit: int = None):
+async def load_books_from_csv(path: str = DEVELOPMENT_DATA_PATH, limit: int | None = None):
+    """Load books from CSV.
+
+    ``limit`` caps how many **CSV rows** are read (via ``head``), not how many
+    valid books you end up with—rows missing title/description are skipped, so
+    the book list can be smaller than ``limit``.
+    """
     if not os.path.exists(path):
         raise FileNotFoundError(f"File {path} does not exist")
-    
+
     df = pd.read_csv(path)
-    if limit:
+    if limit is not None:
         df = df.head(limit)
-        logger.info(f"Limited to first {limit} rows")
+        print(f"Considering only the first {limit} CSV rows (limit applies to rows, not books)")
     else:
-        logger.info(f"Loading all {len(df)} rows")
-    
+        print(f"Loading all {len(df)} rows")
+
     # Create book chunks for embedding
     # TODO: need to add a function to create the book chunks
     books = []
 
     # TODO: need to this better with the book model
-    logger.info("\nPreparing books for embedding")
+    print("\nPreparing books for embedding")
     for idx, row in df.iterrows():
         if pd.notna(row["title"]) and pd.notna(row["description"]):
             book_chunk = {
@@ -147,55 +149,55 @@ async def embed_and_store_books(books: list, batch_size: int = 10):
     with tqdm(total=len(books), desc="Embedding books", unit="book") as pbar:
         for batch in batchify(books, batch_size):
             batch_count += 1
-            try:
-                embedded_batch = []
-                for book in batch:
-                    
+            embedded_batch = []
+            for book in batch:
+                try:
                     combined_text = f"{book.title}\n\n{book.description}"
                     embedding = await openai_client.get_embedding(combined_text)
                     if embedding:
                         book.embedding = embedding
                         embedded_batch.append(book)
                         total_embedded += 1
+                except Exception as e:
+                    print(f"Error embedding in batch {batch_count}: {e}")
+                finally:
+                    # One update per book only—never add len(batch) on top of this,
+                    # or tqdm exceeds total and looks like you passed the limit.
                     pbar.update(1)
-                
-                # TODO: need to make this better, transaction(?)
-                if embedded_batch:
-                    async with AsyncSessionLocal() as session:
-                        session.add_all(embedded_batch)
-                        await session.commit()
-                        
-                    pbar.set_postfix(
-                        {
-                            "Batch": f"{batch_count}",
-                            "Stored": f"{total_embedded}/{len(books)}",
-                        }
-                    )
-                    
-            except Exception as e:
-                logger.error(f"\nError processing batch {batch_count}")
-                # Update progress bar for failed books in this batch
-                pbar.update(len(batch))
+
+            pbar.set_postfix(
+                Batch=batch_count,
+                Stored=f"{total_embedded}/{len(books)}",
+            )
+
+            if not embedded_batch:
                 continue
+
+            try:
+                async with AsyncSessionLocal() as session:
+                    session.add_all(embedded_batch)
+                    await session.commit()
+            except Exception as e:
+                print(f"Error committing batch {batch_count}: {e}")
     
-    logger.info(f"Skipped {skipped_count} books")
-    logger.info(f"Successfully embedded and stored {total_embedded}/{len(books)} books")
+    print(f"Skipped {skipped_count} books")
+    print(f"Successfully embedded and stored {total_embedded}/{len(books)} books")
     await openai_client.close()
     return
 
 async def load_books():
     """Main function to load books from CSV/Parquet into PostgreSQL."""
     if await table_exists():
-        logger.info("Skipping loading books to table.")
+        print("Skipping loading books to table.")
         return
     
-    logger.info("Loading Books from CSV")
-    df = await load_books_from_csv(limit=100)
-    logger.info(f"Loaded {len(df)} rows from CSV")
-    
-    logger.info("Embedding and Storing Books into PostgreSQL")
-    await embed_and_store_books(df)
-    logger.info("Books embedded and stored successfully")
+    print("Loading Books from CSV")
+    books = await load_books_from_csv(limit=100)
+    print(f"Loaded {len(books)} books from CSV (after title/description filter)")
+
+    print("Embedding and Storing Books into PostgreSQL")
+    await embed_and_store_books(books)
+    print("Books embedded and stored successfully")
     
     
 def main():
@@ -203,7 +205,7 @@ def main():
     start = time.perf_counter()
     asyncio.run(load_books())
     elapsed = time.perf_counter() - start
-    logger.info("Ingestion finished in %.2fs", elapsed)
+    print(f"Ingestion finished in {elapsed:.2f} seconds")
 
 
 if __name__ == "__main__":

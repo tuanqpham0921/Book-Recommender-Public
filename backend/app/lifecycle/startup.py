@@ -4,11 +4,11 @@ from fastapi import FastAPI
 from typing import Any
 
 from app.db import redis, postgres, sqlalchemy
-from app.config.constants import AppConfig
+from config.constants import AppConfig
 from app.common.types.session import SuffixEnum, StorageType
 from app.stores import SessionStore
 from app.orchestration.orchestrator import Orchestrator
-from app.config.settings import settings
+from config.settings import settings
 from app.clients import OpenAIClient
 
 logger = logging.getLogger(__name__)

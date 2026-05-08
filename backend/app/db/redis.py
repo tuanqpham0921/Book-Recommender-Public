@@ -2,7 +2,7 @@ import logging
 
 from redis.asyncio import Redis
 
-from app.config import settings
+from config import settings
 # from app.stores import RedisJSONStore
 
 logger = logging.getLogger(__name__)

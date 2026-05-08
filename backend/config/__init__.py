@@ -4,7 +4,7 @@ from .constants import (
     AppPolicyConfig,
     LLMPolicyConfig,
     BookConstraints,
-    BookGuides
+    BookGuides,
 )
 from .logging_config import setup_logging, get_logger
 
@@ -16,5 +16,5 @@ __all__ = [
     "BookConstraints",
     "BookGuides",
     "setup_logging",
-    "get_logger"
+    "get_logger",
 ]

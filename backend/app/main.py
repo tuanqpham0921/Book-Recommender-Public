@@ -3,9 +3,9 @@ from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.config.settings import settings
+from config.settings import settings
 from app.lifecycle import start_all, shutdown_all
-from app.config.logging_config import setup_logging
+from config.logging_config import setup_logging
 
 logger = setup_logging()
 

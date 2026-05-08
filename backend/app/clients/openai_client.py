@@ -7,7 +7,7 @@ from typing import List, Optional
 from .schemas import OpenAIRequest
 from .base import BaseLLMClient
 
-from app.config import settings
+from config import settings
 from app.common.messages import AssistantMessage, SystemMessage, UserMessage
 from app.common.sse_stream import SSEStream
 from app.common.utils import print_json

@@ -4,7 +4,7 @@ from typing import List, Optional, Any
 
 from .base import BaseLLMRequest
 
-from app.config import settings
+from config import settings
 from app.common.utils import save_file
 from app.common.messages import APIMessage, SystemMessage
 

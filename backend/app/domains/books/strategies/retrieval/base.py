@@ -110,7 +110,7 @@ class RetrievalBase:
         format_books = self._format_books_for_llm([results])
         format_task = task.model_dump_json()
         
-        from app.config.constants import BookConstraints
+        from config.constants import BookConstraints
         
         prompt = format_prompt(
             prompt_path="books/retrieval_post_processing.txt",

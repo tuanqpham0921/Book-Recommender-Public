@@ -3,7 +3,7 @@ import asyncpg
 
 from pgvector.asyncpg import register_vector
 
-from app.config import settings
+from config import settings
 
 logger = logging.getLogger(__name__)
 

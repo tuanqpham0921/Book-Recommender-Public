@@ -1,7 +1,6 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-# In app/config/settings.py
 class PostgresSettings(BaseSettings):
     HOST: str = "localhost"
     PORT: int = 5432

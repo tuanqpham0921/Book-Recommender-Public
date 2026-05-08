@@ -1,7 +1,7 @@
 -- Book Recommender: initial PostgreSQL schema (pgvector).
 -- Run once on an empty database (e.g. Docker entrypoint) or apply manually.
 --
--- Embedding size defaults to 1024 (see OPENAI_EMBEDDING_DIMENSIONS / app.config.settings.openai).
+-- Embedding size defaults to 1024 (see OPENAI_EMBEDDING_DIMENSIONS / config.settings.openai).
 -- If you change the embedding model dimensions, alter the VECTOR(...) type accordingly.
 
 CREATE EXTENSION IF NOT EXISTS vector;

@@ -8,7 +8,7 @@ from tqdm import tqdm
 from normalize import clean_numeric_value, prepare_books
 from data.models import BookModel
 from app.clients.openai_client import OpenAIClient
-from app.config import settings
+from config import settings
 
 # TODO
 # need to make the ingestion in the Makefile
@@ -19,7 +19,6 @@ from app.config import settings
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
-from app.config.settings import settings
 
 # TODO: need to make this better with the settings file
 # or for testing / local development

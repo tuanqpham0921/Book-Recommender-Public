@@ -3,7 +3,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, Float, Text, Boolean
 from pgvector.sqlalchemy import Vector
 
-from app.config import settings
+from config import settings
 
 Base = declarative_base()
 

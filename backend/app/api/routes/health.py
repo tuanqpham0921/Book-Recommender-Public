@@ -4,7 +4,7 @@ import asyncio
 
 from sqlalchemy import text
 from fastapi import APIRouter, Request
-from app.config import AppConfig
+from config import AppConfig
 
 from app.api.schemas import HealthStatus
 

@@ -1,6 +1,6 @@
 from typing import Optional, Literal
 from pydantic import BaseModel, Field, ConfigDict
-from app.config import BookConstraints
+from config import BookConstraints
 
 from app.common.enums import GenreEnum
 

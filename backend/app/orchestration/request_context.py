@@ -93,20 +93,7 @@ class RequestContext:
             "pipeline_messages_count": len(self.pipeline_conversation),
             "chat_messages_count": len(self.chat_messages),
         }
-
-    # TODO: implement this
-    # async def set_previous_n_messages(self, n: int = 3):
-    #     """Load previous messages from state manager into context."""
-    #     if self.state_manager is None or self.session_id is None:
-    #         return
-
-    #     all_messages = await self.state_manager.get_chat_history(self.session_id)
-    #     # Load into user conversation (for context)
-    #     self.chat_messages.extend(all_messages[-n:] if all_messages else [])
-    #     # Legacy compatibility
-    #     self.chat_messages = all_messages if all_messages else []
-    #     self.context_size = len(self.chat_messages)
-
+        
     def add_message(self, message: APIMessage, background: bool = True):
         """Add a message to the in-memory context and optionally persist it asynchronously."""
         if (hasattr(message, "tool_calls") and message.tool_calls) or (
@@ -115,18 +102,6 @@ class RequestContext:
             self.add_pipeline_message(message)
         else:
             self.add_chat_message(message)
-
-    # TODO: persist the pipeline messages
-    async def persist_chat_messages(self):
-        """Persist a message to the state manager."""
-        if not self.state_manager:
-            return
-
-        chat_messages = self.chat_messages[self.context_size :]
-        if not chat_messages:
-            return
-
-        await self.state_manager.add_messages_to_redis(self.session_id, chat_messages)
 
     # -----------------------------------------------------------------------------------
     def export_user_context(self, file_name: str = "dev"):
@@ -157,42 +132,4 @@ class RequestContext:
     def export(self, file_name: str = "dev"):
         self.export_user_context(file_name)
         self.export_pipeline_context(file_name)
-
-
-# --------------- UTILS -----------------
-def get_complete_conversation_turns(all_messages, last_n_users=3):
-    """
-    Get the last N user messages and their complete conversation turns.
-    Ensures OpenAI conversation flow is maintained.
-    Optimized to iterate backwards from the end.
-    """
-
-    if not all_messages:
-        logger.info("📭 No messages to process")
-        return []
-
-    if last_n_users <= 0:
-        last_n_users = 3  # Default to last 3 user messages
-
-    try:
-        # Iterate backwards to find the last N user messages
-        user_count = 0
-        start_idx = 0
-
-        for i in range(len(all_messages) - 1, -1, -1):  # Start from end, go backwards
-            if all_messages[i].role == Role.USER:
-                user_count += 1
-                if user_count == last_n_users:
-                    start_idx = i  # Found the Nth user from the end
-                    break
-
-        # Include messages from the found user message to the end
-        # This ensures we get complete conversation turns
-        result_messages = all_messages[start_idx:]
-        logger.info(
-            f"🎯 Selected {len(result_messages)} messages starting from index {start_idx} (found {user_count} user messages)"
-        )
-        return result_messages
-    except Exception as e:
-        logger.error(f"❌ Error processing conversation turns: {e}")
-        return []
+        

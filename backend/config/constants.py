@@ -2,7 +2,6 @@
 class AppConfig:
     """System-level constants."""
     SESSION_PREFIX   = "session"
-    REDIS_TIMEOUT    = 5.0
     POSTGRES_TIMEOUT = 10.0
     OPENAI_TIMEOUT   = 10.0
     DEFAULT_TIMEOUT  = 10.0
@@ -31,7 +30,7 @@ class LLMPolicyConfig:
     LAST_N_USER_MESSAGES       = 4       # always keep last N user messages in full
 
     # ---- Safety / fallback ----
-    MAX_TOTAL_HISTORY_TOKENS = 32_000  # truncate Redis or Postgres chat history beyond this
+    MAX_TOTAL_HISTORY_TOKENS = 32_000  # truncate Postgres chat history beyond this
     MIN_SUMMARIZE_THRESHOLD  = 12_000  # when to start summarizing user messages
 
 class BookGuides:

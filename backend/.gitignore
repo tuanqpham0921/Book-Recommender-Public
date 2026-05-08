@@ -16,9 +16,3 @@ infra/scripts/
 # Data & Exports
 *.csv
 examples/
-
-# Docker volumes
-caddy_data/
-caddy_config/
-postgres_data/
-redis_data/

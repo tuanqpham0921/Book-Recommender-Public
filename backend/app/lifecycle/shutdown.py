@@ -6,26 +6,6 @@ from fastapi import FastAPI
 logger = logging.getLogger(__name__)
 
 
-async def shutdown_redis(app: FastAPI):
-    redis = getattr(app.state, "redis", None)
-    if redis:
-        try:
-            await redis.close()
-            logger.info("🧹 Redis connection closed")
-        except Exception as e:
-            logger.warning(f"⚠️ Failed to close Redis: {e.__class__.__name__}")
-
-
-async def shutdown_postgres(app: FastAPI):
-    pg = getattr(app.state, "pg_pool", None)
-    if pg:
-        try:
-            await pg.close()
-            logger.info("🧹 Postgres connection pool closed")
-        except Exception as e:
-            logger.warning(f"⚠️ Failed to close Postgres: {e.__class__.__name__}")
-
-
 async def shutdown_sqlalchemy_engine(app: FastAPI):
     engine = getattr(app.state, "sqlalchemy_engine", None)
     if engine:
@@ -49,8 +29,6 @@ async def shutdown_openai(app: FastAPI):
 async def shutdown_all(app: FastAPI):
     logger.info("🔻 Shutting down services...")
     await asyncio.gather(
-        shutdown_redis(app),
-        shutdown_postgres(app),
         shutdown_openai(app),
         shutdown_sqlalchemy_engine(app),
     )

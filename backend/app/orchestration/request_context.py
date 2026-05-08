@@ -25,8 +25,6 @@ class RequestContext:
 
     # Services
     llm_client: OpenAIClient = None
-    pg_pool: asyncpg.Pool = None
-    session: AsyncSession = None
     book_store: BookStore = None
     sse_stream: SSEStream = None
 

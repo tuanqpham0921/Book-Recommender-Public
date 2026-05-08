@@ -6,32 +6,6 @@ class AppConfig:
     OPENAI_TIMEOUT   = 10.0
     DEFAULT_TIMEOUT  = 10.0
     
-class AppPolicyConfig:
-    """Operational policies for runtime behavior."""
-    MAX_BOOK_RESULTS  = 20       # max number of books returned per query
-    MAX_API_RETRIES   = 3        # how many times to retry a failed API call
-    RETRY_BACKOFF_SEC = 2.0      # backoff delay between retries
-    MAX_PARALLEL_REQUESTS  = 5   # throttle concurrent OpenAI or DB calls
-    API_RATE_LIMIT_PER_MIN = 60  # requests per minute per user/session
-    CACHE_TTL_SEC = 3600         # default cache expiration for recommendations
-
-
-class LLMPolicyConfig:
-    """Constraints and policies for LLM calls and token usage."""
-
-    # ---- Context & generation limits ----
-    MAX_CONTEXT_TOKENS    = 128_000  # model limit (e.g. GPT-4.1-mini total context window)
-    MAX_GENERATION_TOKENS = 2_000    # max tokens for one assistant completion
-
-    # ---- Conversation management ----
-    USER_CONTEXT_TOKEN_LIMIT   = 20_000  # cap user chat history before summarization
-    SYSTEM_CONTEXT_TOKEN_LIMIT = 4_000   # reserved for system + prompt templates
-    TOOL_CONTEXT_TOKEN_LIMIT   = 2_000   # reserved for tool messages, etc.
-    LAST_N_USER_MESSAGES       = 4       # always keep last N user messages in full
-
-    # ---- Safety / fallback ----
-    MAX_TOTAL_HISTORY_TOKENS = 32_000  # truncate Postgres chat history beyond this
-    MIN_SUMMARIZE_THRESHOLD  = 12_000  # when to start summarizing user messages
 
 class BookGuides:
     CLASSICAL_YEAR    = "before 1900"

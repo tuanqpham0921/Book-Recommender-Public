@@ -58,7 +58,7 @@ async def start_all(app: FastAPI):
 
     # SQLAlchemy returns tuple (engine, session_factory)
     sqlalchemy_result = await _startup_task(
-        "SQLAlchemy", start_sqlalchemy_engine, AppConfig.POSTGRES_TIMEOUT
+        "SQLAlchemy", start_sqlalchemy_engine, AppConfig.DATABASE_TIMEOUT
     )
     if sqlalchemy_result:
         app.state.sqlalchemy_engine, app.state.sqlalchemy_session_factory = (

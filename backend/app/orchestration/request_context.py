@@ -1,9 +1,6 @@
 import logging
-import asyncio
-import asyncpg
 from dataclasses import dataclass, field
 from typing import List, Dict, Any, Optional
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.common.enums import Role
 from app.common.utils import now_iso, save_file

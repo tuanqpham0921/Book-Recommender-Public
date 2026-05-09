@@ -21,7 +21,7 @@ async def init_sqlalchemy():
         if settings.postgres.HOST.startswith("/cloudsql/"):
             connect_args.update(
                 {
-                    # Note: connect_timeout is not supported by asyncpg through SQLAlchemy
+                    # Note: connect_timeout is not supported by the asyncpg driver via SQLAlchemy
                     "server_settings": {
                         "application_name": "book-recommender-backend",
                     },
@@ -81,7 +81,7 @@ async def init_sqlalchemy():
                     logger.info("✅ Books table already exists")
                 else:
                     logger.info(
-                        "⚠️ Books table not found - this is expected if using direct asyncpg setup"
+                        "⚠️ Books table not found — apply migrations or init SQL if you expect it"
                     )
 
             except Exception as e:

@@ -2,7 +2,7 @@
 class AppConfig:
     """System-level constants."""
     SESSION_PREFIX   = "session"
-    POSTGRES_TIMEOUT = 10.0
+    DATABASE_TIMEOUT = 10.0  # SQLAlchemy engine init / connectivity
     OPENAI_TIMEOUT   = 10.0
     DEFAULT_TIMEOUT  = 10.0
     

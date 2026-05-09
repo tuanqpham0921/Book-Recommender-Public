@@ -45,7 +45,7 @@ postgres-cli:
 
 # clean the docker containers
 docker-clean:
-	docker compose -f $(DOCKER_COMPOSE_FILE) down -v
+	docker compose --env-file $(ENV_FILE) -f $(DOCKER_COMPOSE_FILE) down -v
 
 # -------------------
 .PHONY: dev ingestion postgres-start postgres-stop postgres-cli docker-clean clean

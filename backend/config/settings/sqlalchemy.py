@@ -1,7 +1,9 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class PostgresSettings(BaseSettings):
+class SQLAlchemySettings(BaseSettings):
+    """Connection and pool settings for the async SQLAlchemy engine (PostgreSQL + asyncpg)."""
+
     HOST: str = "localhost"
     PORT: int = 5432
     DB: str = "book_recommender"

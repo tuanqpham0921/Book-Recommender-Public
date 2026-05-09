@@ -1,11 +1,11 @@
 from .main import settings
 from .app import AppSettings
 from .openai import OpenAISettings
-from .postgres import PostgresSettings
+from .sqlalchemy import SQLAlchemySettings
 
 __all__ = [
     "AppSettings",
     "OpenAISettings",
-    "PostgresSettings",
+    "SQLAlchemySettings",
     "settings",
 ]

@@ -18,7 +18,7 @@ async def init_sqlalchemy():
         }
 
         # Add Cloud SQL specific settings if using socket connection
-        if settings.postgres.HOST.startswith("/cloudsql/"):
+        if settings.sqlalchemy.HOST.startswith("/cloudsql/"):
             connect_args.update(
                 {
                     # Note: connect_timeout is not supported by the asyncpg driver via SQLAlchemy
@@ -29,16 +29,16 @@ async def init_sqlalchemy():
             )
 
         logger.info(
-            f"🔗 Connecting to SQLAlchemy: {settings.postgres.sqlalchemy_url.replace(settings.postgres.PASSWORD, '***')}"
+            f"🔗 Connecting to SQLAlchemy: {settings.sqlalchemy.sqlalchemy_url.replace(settings.sqlalchemy.PASSWORD, '***')}"
         )
 
         # Create async engine with connection pooling
         _sqlalchemy_engine = create_async_engine(
-            settings.postgres.sqlalchemy_url,
+            settings.sqlalchemy.sqlalchemy_url,
             # Connection pool settings optimized for Cloud SQL
-            pool_size=settings.postgres.MIN_CONNECTIONS,
-            max_overflow=settings.postgres.MAX_CONNECTIONS
-            - settings.postgres.MIN_CONNECTIONS,
+            pool_size=settings.sqlalchemy.MIN_CONNECTIONS,
+            max_overflow=settings.sqlalchemy.MAX_CONNECTIONS
+            - settings.sqlalchemy.MIN_CONNECTIONS,
             pool_pre_ping=True,  # Validate connections before use
             pool_recycle=1800,  # Recycle connections every 30 minutes (Cloud SQL friendly)
             pool_timeout=60,  # Wait up to 60 seconds for a connection
@@ -101,7 +101,7 @@ async def init_sqlalchemy():
     except Exception as e:
         logger.error(f"❌ SQLAlchemy initialization failed: {e}")
         logger.error(
-            f"   Database URL: {settings.postgres.sqlalchemy_url.replace(settings.postgres.PASSWORD, '***')}"
+            f"   Database URL: {settings.sqlalchemy.sqlalchemy_url.replace(settings.sqlalchemy.PASSWORD, '***')}"
         )
         return None, None
 

@@ -30,7 +30,7 @@ DEVELOPMENT_DATA_PATH = "data/books.csv"
 
 # Create async engine using your database settings
 
-async_engine = create_async_engine(settings.postgres.sqlalchemy_url)
+async_engine = create_async_engine(settings.sqlalchemy.sqlalchemy_url)
 AsyncSessionLocal = async_sessionmaker(async_engine, class_=AsyncSession)
 
 def batchify(iterable, batch_size):

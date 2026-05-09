@@ -19,6 +19,11 @@ dev:
 ingestion:
 	poetry run python ingestion/loader.py
 
+# clear the pycache
+clean:
+	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null
+	find . -name "*.pyo" -delete
+	find . -name "*.pyc" -delete
 
 # -------------------
 # PostgreSQL commands
@@ -43,4 +48,4 @@ docker-clean:
 	docker compose -f $(DOCKER_COMPOSE_FILE) down -v
 
 # -------------------
-.PHONY: dev ingestion postgres-start postgres-stop postgres-cli docker-clean
+.PHONY: dev ingestion postgres-start postgres-stop postgres-cli docker-clean clean

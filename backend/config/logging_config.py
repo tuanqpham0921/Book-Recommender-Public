@@ -34,7 +34,7 @@ def setup_logging(
     """
     # Delay import to avoid circular dependency
     try:
-        from .settings.main import settings
+        from .settings import settings
         environment = env or settings.app.ENVIRONMENT
     except Exception:
         environment = env or os.getenv("APP_ENVIRONMENT", "development")

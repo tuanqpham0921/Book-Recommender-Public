@@ -5,19 +5,11 @@ services:
     restart: unless-stopped
     depends_on:
       - postgres
+    env_file:
+      - config/.env
     environment:
-      - ALLOW_ORIGINS
-      - OPENAI_API_KEY
-      - MODEL
-      - EMBEDDING_MODEL
-      - EMBEDDING_DIMENSIONS
-      - DATA_DIR
-      - EXPORT_DIR
-      - POSTGRES_HOST
-      - POSTGRES_PORT
-      - POSTGRES_DB
-      - POSTGRES_USER
-      - POSTGRES_PASSWORD
+      # Reach the postgres service from the app container
+      POSTGRES_HOST: postgres
     ports:
       - "8000:8000"
     networks:

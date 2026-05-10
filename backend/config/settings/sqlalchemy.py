@@ -4,13 +4,13 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class SQLAlchemySettings(BaseSettings):
     """Connection and pool settings for the async SQLAlchemy engine (PostgreSQL + asyncpg)."""
 
-    HOST: str = "localhost"
-    PORT: int = 5432
-    DB: str = "book_recommender"
-    USER: str = "postgres"
-    PASSWORD: str = "password"
-    MIN_CONNECTIONS: int = 5
-    MAX_CONNECTIONS: int = 20
+    HOST: str
+    PORT: int
+    DB: str
+    USER: str
+    PASSWORD: str
+    MIN_CONNECTIONS: int
+    MAX_CONNECTIONS: int
 
     @property
     def sqlalchemy_url(self) -> str:

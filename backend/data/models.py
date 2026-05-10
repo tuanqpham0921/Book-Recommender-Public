@@ -15,6 +15,7 @@ class BookModel(Base):
 
     # Book identifiers
     isbn13 = Column(String(13), primary_key=True, index=True)
+    isbn10 = Column(String(10), nullable=True, index=True)
 
     # Basic book information
     title = Column(String(500), nullable=False, index=True)
@@ -41,16 +42,8 @@ class BookModel(Base):
     genre = Column(String(100), nullable=True, index=True)
 
     thumbnail = Column(String, nullable=True)
+    large_thumbnail = Column(String, nullable=True)
     ratings_count = Column(Integer, nullable=True)
-
-    # Emotion scores (used for recommendations / analysis)
-    anger = Column(Float, nullable=True, default=0.0)
-    disgust = Column(Float, nullable=True, default=0.0)
-    fear = Column(Float, nullable=True, default=0.0)
-    joy = Column(Float, nullable=True, default=0.0)
-    sadness = Column(Float, nullable=True, default=0.0)
-    surprise = Column(Float, nullable=True, default=0.0)
-    neutral = Column(Float, nullable=True, default=0.0)
 
     # Misc presentation fields
     title_and_subtiles = Column(Text, nullable=True)
@@ -62,6 +55,7 @@ class BookModel(Base):
         """Convert model to dictionary."""
         return {
             "isbn13": self.isbn13,
+            "isbn10": self.isbn10,
             "title": self.title,
             "authors": self.authors,
             "categories": self.categories,
@@ -73,12 +67,6 @@ class BookModel(Base):
             "is_children": self.is_children,
             "genre": self.genre,
             "thumbnail": self.thumbnail,
+            "large_thumbnail": self.large_thumbnail,
             "title_and_subtiles": self.title_and_subtiles,
-            "anger": self.anger,
-            "disgust": self.disgust,
-            "fear": self.fear,
-            "joy": self.joy,
-            "sadness": self.sadness,
-            "surprise": self.surprise,
-            "neutral": self.neutral,
         }

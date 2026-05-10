@@ -5,13 +5,11 @@ import pandas as pd
 
 from tqdm import tqdm
 
-from normalize import clean_numeric_value, prepare_books
 from data.models import BookModel
 from app.clients.openai_client import OpenAIClient
 from config import settings
 
 # TODO
-# need to make the ingestion in the Makefile
 # need to add function comments
 # need to add optimizations
 # need to stream the csv file? or make it better
@@ -39,8 +37,17 @@ def batchify(iterable, batch_size):
         yield iterable[i : i + batch_size]
 
 # TODO: need to add a clean function to clean the data and remove the rows that are not valid
+def clean_numeric_value(value):
+    """Clean and convert numeric values, return None if invalid."""
+    if pd.isna(value) or value == "" or value == "nan":
+        return None
+    try:
+        return float(value)
+    except (ValueError, TypeError):
+        return None
 
 async def table_exists():
+    """Check if the table exists and has more than LOAD_LIMIT rows"""
     async with AsyncSessionLocal() as session:        
         q_exists = text("""
             select to_regclass(:fqtn) is not null as exists_;""")
@@ -65,7 +72,7 @@ async def table_exists():
         return row_count > LOAD_LIMIT
         
 
-async def load_books_from_csv(path: str = DEVELOPMENT_DATA_PATH, limit: int | None = None):
+def load_books_from_csv(path: str = DEVELOPMENT_DATA_PATH, limit: int | None = None):
     """Load books from CSV.
 
     ``limit`` caps how many **CSV rows** are read (via ``head``), not how many
@@ -81,55 +88,40 @@ async def load_books_from_csv(path: str = DEVELOPMENT_DATA_PATH, limit: int | No
         print(f"Considering only the first {limit} CSV rows (limit applies to rows, not books)")
     else:
         print(f"Loading all {len(df)} rows")
-    return df
 
+    # Create book chunks for embedding
+    return df.to_dict(orient="records")
 
+async def embed_batch(batch: list[dict], openai_client: OpenAIClient) -> list[dict]:
+    """Embed a batch of books using OpenAI."""
+    return [
+        BookModel(**book, embedding=await openai_client.get_embedding(book["title"] + "\n\n" + book["description"]))
+        for book in batch
+    ]
 
-async def embed_and_store_books(books: list, batch_size: int = 10):
+async def embed_and_store_books(books: list[dict], batch_size: int = 10):
+    """Embed and store a batch of books into the database."""
     if not books:
-        raise ValueError("Failed to load books from CSV")
+        raise ValueError("No books to embed and store")
     
-    batch_count = 0
-    skipped_count = 0
-    total_embedded = 0
     openai_client = OpenAIClient(api_key=settings.openai.API_KEY)
     
-    with tqdm(total=len(books), desc="Embedding books", unit="book") as pbar:
-        for batch in batchify(books, batch_size):
-            batch_count += 1
-            embedded_batch = []
-            for book in batch:
-                try:
-                    combined_text = f"{book.title}\n\n{book.description}"
-                    embedding = await openai_client.get_embedding(combined_text)
-                    if embedding:
-                        book.embedding = embedding
-                        embedded_batch.append(book)
-                        total_embedded += 1
-                except Exception as e:
-                    print(f"Error embedding in batch {batch_count}: {e}")
-                finally:
-                    # One update per book only—never add len(batch) on top of this,
-                    # or tqdm exceeds total and looks like you passed the limit.
-                    pbar.update(1)
+    for batch in batchify(books, batch_size):
+        print(f"Embedding batch {len(batch)} books")
+        embedded_batch = await embed_batch(batch, openai_client)
 
-            pbar.set_postfix(
-                Batch=batch_count,
-                Stored=f"{total_embedded}/{len(books)}",
-            )
+        if not embedded_batch:
+            continue
 
-            if not embedded_batch:
-                continue
-
-            try:
-                async with AsyncSessionLocal() as session:
-                    session.add_all(embedded_batch)
-                    await session.commit()
-            except Exception as e:
-                print(f"Error committing batch {batch_count}")
+        try:
+            async with AsyncSessionLocal() as session:
+                session.add_all(embedded_batch)
+                await session.commit()
+        except Exception as e:
+            # print(f"Error committing batch {batch_count}: {e}")
+            print(f"Error committing batch: {e}")
+            raise e
     
-    print(f"Skipped {skipped_count} books")
-    print(f"Successfully embedded and stored {total_embedded}/{len(books)} books")
     await openai_client.close()
     return
 
@@ -140,13 +132,10 @@ async def load_books():
         return
     
     print("Loading Books from CSV")
-    df = await load_books_from_csv(limit=100)
-    print(f"Loaded {len(df)} books from CSV (after title/description filter)")
+    books = load_books_from_csv(limit=100)
+    print(f"Loaded {len(books)} books from CSV (after title/description filter)")
 
-    books = prepare_books(df)
-    print(f"Prepared {len(books)} books for embedding and storage")
-    
-    print(f"Embedding and Storing Books into PostgreSQL")
+    print("Embedding and Storing Books into PostgreSQL")
     await embed_and_store_books(books)
     print("Books embedded and stored successfully")
     

@@ -167,7 +167,7 @@ class Orchestrator:
             include={"user_query_domain", "continue_pipeline", "reasoning"}
         )
 
-        from config.constants import BookConstraints, BookGuides
+        from config import BookConstraints, BookGuides
 
         prompt = format_prompt(
             prompt_path="books/strategy_classification.txt",

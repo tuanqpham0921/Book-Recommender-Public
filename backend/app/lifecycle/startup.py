@@ -4,9 +4,8 @@ from fastapi import FastAPI
 from typing import Any
 
 from app.db import sqlalchemy
-from config.constants import AppConfig
+from config import AppConfig, settings
 from app.orchestration.orchestrator import Orchestrator
-from config.settings import settings
 from app.clients import OpenAIClient
 
 logger = logging.getLogger(__name__)

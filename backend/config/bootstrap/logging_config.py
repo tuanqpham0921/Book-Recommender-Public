@@ -1,6 +1,6 @@
-import os
-import logging
 import json
+import logging
+import os
 from typing import Optional
 
 LOG_FORMAT = "%(asctime)s | %(levelname)s | %(name)s | %(message)s"
@@ -9,6 +9,7 @@ DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 class JSONFormatter(logging.Formatter):
     """Formatter that outputs logs as structured JSON."""
+
     def format(self, record: logging.LogRecord) -> str:
         log_entry = {
             "timestamp": self.formatTime(record, self.datefmt),
@@ -32,9 +33,9 @@ def setup_logging(
     """
     Configure and return a root logger for the app.
     """
-    # Delay import to avoid circular dependency
     try:
-        from .settings import settings
+        from ..settings import settings
+
         environment = env or settings.app.ENVIRONMENT
     except Exception:
         environment = env or os.getenv("APP_ENVIRONMENT", "development")

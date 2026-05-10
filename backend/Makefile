@@ -3,6 +3,8 @@ MAKEFILE_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 ENV_FILE := $(MAKEFILE_DIR)/config/.env
 DOCKER_COMPOSE_FILE := $(MAKEFILE_DIR)/docker-compose.yml
 POSTGRES_SERVICE := postgres
+# Must match container_name for the postgres service in docker-compose.yml
+POSTGRES_CONTAINER := book-rec-postgres
 
 # -------------------
 # General commands

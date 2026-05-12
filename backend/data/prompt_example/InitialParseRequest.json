@@ -1,0 +1,91 @@
+[
+  {
+    "user_query": "Hey there!",
+    "small_talk": "Hey there!",
+    "out_of_scope": null,
+    "user_query_domain": null,
+    "reasoning": "Simple greeting without domain intent.",
+    "domain_confidence": 0.1
+  },
+  {
+    "user_query": "Good morning, how are you?",
+    "small_talk": "Good morning, how are you?",
+    "out_of_scope": null,
+    "user_query_domain": null,
+    "reasoning": "Polite small talk unrelated to any task.",
+    "domain_confidence": 0.1
+  },
+  {
+    "user_query": "What's the weather like in Austin?",
+    "small_talk": null,
+    "out_of_scope": "What's the weather like in Austin?",
+    "user_query_domain": null,
+    "reasoning": "Weather question outside supported domains.",
+    "domain_confidence": 0.0
+  },
+  {
+    "user_query": "Can you help me with my calculus homework?",
+    "small_talk": null,
+    "out_of_scope": "Can you help me with my calculus homework?",
+    "user_query_domain": null,
+    "reasoning": "Educational request unrelated to books, project, or meta topics.",
+    "domain_confidence": 0.0
+  },
+  {
+    "user_query": "Recommend me a book about love.",
+    "small_talk": null,
+    "out_of_scope": null,
+    "user_query_domain": "Recommend me a book about love.",
+    "reasoning": "Book recommendation request within supported domain.",
+    "domain_confidence": 0.95
+  },
+  {
+    "user_query": "Compare Dune and Foundation by page count.",
+    "small_talk": null,
+    "out_of_scope": null,
+    "user_query_domain": "Compare Dune and Foundation by page count.",
+    "reasoning": "Book comparison query involving factual details.",
+    "domain_confidence": 0.9
+  },
+  {
+    "user_query": "Can you explain the architecture of this project?",
+    "small_talk": null,
+    "out_of_scope": null,
+    "user_query_domain": "Can you explain the architecture of this project?",
+    "reasoning": "Project domain query asking about system structure.",
+    "domain_confidence": 0.85
+  },
+  {
+    "user_query": "Summarize what we’ve talked about so far.",
+    "small_talk": null,
+    "out_of_scope": null,
+    "user_query_domain": "Summarize what we’ve talked about so far.",
+    "reasoning": "Meta domain request for conversation summary.",
+    "domain_confidence": 0.87
+  },
+  {
+    "user_query": "That one sounds good.",
+    "small_talk": null,
+    "out_of_scope": null,
+    "user_query_domain": null,
+    "reasoning": "Ambiguous reference without clear domain context.",
+    "domain_confidence": 0.3,
+    "continue_pipeline": false
+  },
+  {
+    "user_query": "Hey, can you find a romance book for me and also what's the weather like?",
+    "small_talk": "Hey!",
+    "out_of_scope": "what's the weather like?",
+    "user_query_domain": "find a romance book for me",
+    "reasoning": "Mixed message: greeting, out-of-scope weather query, and valid book request.",
+    "domain_confidence": 0.9
+  },
+  {
+    "user_query": "Hi! Can you recommend a mystery novel?",
+    "small_talk": "Hi!",
+    "out_of_scope": null,
+    "user_query_domain": "Can you recommend a mystery novel?",
+    "reasoning": "Greeting followed by a valid book recommendation query.",
+    "domain_confidence": 0.95
+  }
+]

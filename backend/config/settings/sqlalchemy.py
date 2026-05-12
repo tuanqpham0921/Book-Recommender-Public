@@ -11,6 +11,9 @@ class SQLAlchemySettings(BaseSettings):
     PASSWORD: str
     MIN_CONNECTIONS: int
     MAX_CONNECTIONS: int
+    
+    SCHEMA: str
+    TABLE: str
 
     @property
     def sqlalchemy_url(self) -> str:

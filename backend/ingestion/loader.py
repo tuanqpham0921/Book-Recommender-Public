@@ -6,7 +6,7 @@ import pandas as pd
 from data.models import BookModel
 from clients.openai_client import OpenAIClient
 from config import settings
-
+from config.bootstrap import IngestionConstants
 # TODO
 # need to add function comments
 # need to add optimizations
@@ -18,15 +18,6 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
 
 from db import close_async_engine, get_async_engine, get_session_factory
 
-# TODO: need to make this better with the settings file
-# or for testing / local development
-SCHEMA = "public"  # set this to your expected schema
-TABLE = "books"
-CSV_FILE = "books.csv"
-LOAD_LIMIT = 5000
-DEVELOPMENT_DATA_PATH = "data/books.csv"
-
-
 def batchify(iterable, batch_size):
     """Split an iterable into batches of specified size."""
     for i in range(0, len(iterable), batch_size):
@@ -35,6 +26,9 @@ def batchify(iterable, batch_size):
 
 async def table_exists(session_factory: async_sessionmaker[AsyncSession]):
     """Check if the table exists and has more than LOAD_LIMIT rows"""
+
+    SCHEMA = settings.postgres.SCHEMA
+    TABLE = settings.postgres.TABLE
 
     async with session_factory() as session:
         q_exists = text(
@@ -59,16 +53,19 @@ async def table_exists(session_factory: async_sessionmaker[AsyncSession]):
         row_count = int(result.scalar() or 0)
 
         print(f"Table {SCHEMA}.{TABLE} has {row_count} rows")
-        return row_count > LOAD_LIMIT
+        return row_count > IngestionConstants.APPROXIMATE_LOAD_LIMIT
 
 
-def load_books_from_csv(path: str = DEVELOPMENT_DATA_PATH, limit: int | None = None):
+def load_books_from_csv(path: str = settings.postgres.DATA_PATH, 
+                        csv_file: str = IngestionConstants.CSV_FILE,
+                        limit: int | None = IngestionConstants.APPROXIMATE_LOAD_LIMIT):
     """Load books from CSV.
 
     ``limit`` caps how many **CSV rows** are read (via ``head``), not how many
     valid books you end up with—rows missing title/description are skipped, so
     the book list can be smaller than ``limit``.
     """
+    path = settings.postgres.DATA_PATH + csv_file
     if not os.path.exists(path):
         raise FileNotFoundError(f"File {path} does not exist")
 
@@ -99,7 +96,7 @@ async def embed_and_store_books(
     books: list[BookModel],
     session_factory: async_sessionmaker[AsyncSession],
     openai_client: OpenAIClient,
-    batch_size: int = 10,
+    batch_size: int = IngestionConstants.BATCH_SIZE,
 ):
     """Embed and store a batch of books into the database."""
     if not books:

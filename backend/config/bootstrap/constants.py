@@ -69,3 +69,12 @@ class BookConstraints:
             result += f"  {attr_name} = {attr_value}\n"
             
         return result
+
+# TODO: these might need to be moved to the settings file
+# things that are where they are right now are mostly for testing and development
+class IngestionConstants:
+    """Constants for ingestion."""
+    CSV_FILE = "books.csv"
+    APPROXIMATE_LOAD_LIMIT = 5000
+    BATCH_SIZE = 10
+    TESTING_LIMIT = 100

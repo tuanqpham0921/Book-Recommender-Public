@@ -3,7 +3,7 @@ import logging
 from fastapi import FastAPI
 from typing import Any
 
-from app.db import sqlalchemy
+from db import sqlalchemy
 from config import AppConfig, settings
 from app.orchestration.orchestrator import Orchestrator
 from app.clients import OpenAIClient

@@ -48,7 +48,7 @@ async def table_exists(session_factory: async_sessionmaker[AsyncSession]):
 
         if not table_exists:
             # schema.table doesn't exist
-            print(f"Table {SCHEMA}.{TABLE} not found")
+            print(f"❌ Table {SCHEMA}.{TABLE} not found")
             return False
 
         print(f"Table {SCHEMA}.{TABLE} found")
@@ -103,7 +103,7 @@ async def embed_and_store_books(
 ):
     """Embed and store a batch of books into the database."""
     if not books:
-        raise ValueError("No books to embed and store")
+        raise ValueError("❌ No books to embed and store")
 
     for batch in batchify(books, batch_size):
         print(f"Embedding batch {len(batch)} books")
@@ -116,9 +116,9 @@ async def embed_and_store_books(
             async with session_factory() as session:
                 session.add_all(embedded_batch)
                 await session.commit()
-            print(f"Committed batch {len(embedded_batch)} books")
+            print(f"✅Committed batch {len(embedded_batch)} books")
         except Exception as e:
-            print(f"Error committing batch: {e}")
+            print(f"❌ Error committing batch: {e}")
             raise
 
     return
@@ -132,15 +132,16 @@ async def load_books():
         async_engine = get_async_engine()
         session_factory = get_session_factory(async_engine)
         if await table_exists(session_factory):
-            print("Skipping loading books to table.")
+            print("✅ Table exists, ready to use.")
             return
 
+        return
+    
         print("Loading Books from CSV")
         books_df = load_books_from_csv(limit=100)
         print(f"Loaded {len(books_df)} rows from CSV")
 
         from ingestion.normalize import prepare_books
-
         books = prepare_books(books_df)
 
         openai_client = OpenAIClient(api_key=settings.openai.API_KEY)

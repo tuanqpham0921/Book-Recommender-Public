@@ -28,7 +28,7 @@ def prepare_books(df: pd.DataFrame) -> list[BookModel]:
                 "authors": str(row.get("authors", "")),
                 "categories": str(row.get("categories", "")),
                 "genre": str(row.get("simple_categories", "")),
-                "description": str(row["description"]),
+                "description": str(row["tagged_description"]),
                 "published_year": (
                     int(clean_numeric_value(row.get("published_year")))
                     if clean_numeric_value(row.get("published_year"))
@@ -47,13 +47,13 @@ def prepare_books(df: pd.DataFrame) -> list[BookModel]:
                 ),
                 "thumbnail": str(row.get("thumbnail", "")),
                 "title_and_subtiles": str(row.get("title_and_subtiles", "")),
-                "anger": clean_numeric_value(row.get("anger")) or 0.0,
-                "disgust": clean_numeric_value(row.get("disgust")) or 0.0,
-                "fear": clean_numeric_value(row.get("fear")) or 0.0,
-                "joy": clean_numeric_value(row.get("joy")) or 0.0,
-                "sadness": clean_numeric_value(row.get("sadness")) or 0.0,
-                "surprise": clean_numeric_value(row.get("surprise")) or 0.0,
-                "neutral": clean_numeric_value(row.get("neutral")) or 0.0,
+                # "anger": clean_numeric_value(row.get("anger")) or 0.0,
+                # "disgust": clean_numeric_value(row.get("disgust")) or 0.0,
+                # "fear": clean_numeric_value(row.get("fear")) or 0.0,
+                # "joy": clean_numeric_value(row.get("joy")) or 0.0,
+                # "sadness": clean_numeric_value(row.get("sadness")) or 0.0,
+                # "surprise": clean_numeric_value(row.get("surprise")) or 0.0,
+                # "neutral": clean_numeric_value(row.get("neutral")) or 0.0,
             }
             # convert to BookModel
             books.append(BookModel(**book_chunk))  

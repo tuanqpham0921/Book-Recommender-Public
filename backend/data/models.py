@@ -15,7 +15,7 @@ class BookModel(Base):
 
     # Book identifiers
     isbn13 = Column(String(13), primary_key=True, index=True)
-    isbn10 = Column(String(10), nullable=True, index=True)
+    # isbn10 = Column(String(10), nullable=True, index=True)
 
     # Basic book information
     title = Column(String(500), nullable=False, index=True)
@@ -42,7 +42,8 @@ class BookModel(Base):
     genre = Column(String(100), nullable=True, index=True)
 
     thumbnail = Column(String, nullable=True)
-    large_thumbnail = Column(String, nullable=True)
+    # large_thumbnail = Column(String, nullable=True)
+
     ratings_count = Column(Integer, nullable=True)
 
     # Misc presentation fields

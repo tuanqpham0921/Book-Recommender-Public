@@ -16,7 +16,9 @@ from config import settings
 # DETAIL:  Key (isbn13)=(9780002005883) already exists.
 
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
+
+from db import close_sqlalchemy, get_engine, get_session_factory
 
 # TODO: need to make this better with the settings file
 # or for testing / local development
@@ -25,11 +27,6 @@ TABLE = "books"
 CSV_FILE = "books.csv"
 LOAD_LIMIT = 5000
 DEVELOPMENT_DATA_PATH = "data/books.csv"
-
-# Create async engine using your database settings
-
-async_engine = create_async_engine(settings.sqlalchemy.sqlalchemy_url)
-AsyncSessionLocal = async_sessionmaker(async_engine, class_=AsyncSession)
 
 def batchify(iterable, batch_size):
     """Split an iterable into batches of specified size."""
@@ -46,9 +43,10 @@ def clean_numeric_value(value):
     except (ValueError, TypeError):
         return None
 
-async def table_exists():
+async def table_exists(session_factory: async_sessionmaker[AsyncSession]):
     """Check if the table exists and has more than LOAD_LIMIT rows"""
-    async with AsyncSessionLocal() as session:        
+    
+    async with session_factory() as session:        
         q_exists = text("""
             select to_regclass(:fqtn) is not null as exists_;""")
         
@@ -90,21 +88,22 @@ def load_books_from_csv(path: str = DEVELOPMENT_DATA_PATH, limit: int | None = N
         print(f"Loading all {len(df)} rows")
 
     # Create book chunks for embedding
-    return df.to_dict(orient="records")
+    return df
 
 async def embed_batch(batch: list[dict], openai_client: OpenAIClient) -> list[dict]:
     """Embed a batch of books using OpenAI."""
-    return [
-        BookModel(**book, embedding=await openai_client.get_embedding(book["title"] + "\n\n" + book["description"]))
-        for book in batch
-    ]
+    for book in batch:
+        book.embedding=await openai_client.get_embedding(book.title + "\n\n" + book.description)
+        
+    return batch
 
-async def embed_and_store_books(books: list[dict], batch_size: int = 10):
+async def embed_and_store_books(books: list[BookModel], 
+                                session_factory: async_sessionmaker[AsyncSession], 
+                                openai_client: OpenAIClient,
+                                batch_size: int = 10):
     """Embed and store a batch of books into the database."""
     if not books:
         raise ValueError("No books to embed and store")
-    
-    openai_client = OpenAIClient(api_key=settings.openai.API_KEY)
     
     for batch in batchify(books, batch_size):
         print(f"Embedding batch {len(batch)} books")
@@ -114,9 +113,10 @@ async def embed_and_store_books(books: list[dict], batch_size: int = 10):
             continue
 
         try:
-            async with AsyncSessionLocal() as session:
+            async with session_factory() as session:
                 session.add_all(embedded_batch)
                 await session.commit()
+            print(f"Committed batch {len(embedded_batch)} books")
         except Exception as e:
             # print(f"Error committing batch {batch_count}: {e}")
             print(f"Error committing batch: {e}")
@@ -127,17 +127,28 @@ async def embed_and_store_books(books: list[dict], batch_size: int = 10):
 
 async def load_books():
     """Main function to load books from CSV/Parquet into PostgreSQL."""
-    if await table_exists():
-        print("Skipping loading books to table.")
-        return
-    
-    print("Loading Books from CSV")
-    books = load_books_from_csv(limit=100)
-    print(f"Loaded {len(books)} books from CSV (after title/description filter)")
+    try:
+        async_engine = get_engine()
+        session_factory = get_session_factory(async_engine)
+        if await table_exists(session_factory):
+            print("Skipping loading books to table.")
+            return
 
-    print("Embedding and Storing Books into PostgreSQL")
-    await embed_and_store_books(books)
-    print("Books embedded and stored successfully")
+        print("Loading Books from CSV")
+        books = load_books_from_csv(limit=100)
+        print(f"Loaded {len(books)} books from CSV (after title/description filter)")
+        
+        # Prepare books for embedding and storage
+        from ingestion.normalize import prepare_books
+        books = prepare_books(books)
+
+        openai_client = OpenAIClient(api_key=settings.openai.API_KEY)
+        print("Embedding and Storing Books into PostgreSQL")
+        await embed_and_store_books(books, session_factory, openai_client)
+        print("Books embedded and stored successfully")
+    finally:
+        await openai_client.close()
+        await close_sqlalchemy(async_engine)
     
     
 def main():

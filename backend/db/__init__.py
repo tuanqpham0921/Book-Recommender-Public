@@ -1,7 +1,7 @@
-from .sqlalchemy import get_engine, get_session_factory, close_sqlalchemy
+from .async_engine import get_async_engine, get_session_factory, close_async_engine
 
 __all__ = [
-    "get_engine",
+    "get_async_engine",
     "get_session_factory",
-    "close_sqlalchemy",
+    "close_async_engine",
 ]

@@ -5,7 +5,6 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
 )
 
-from sqlalchemy import text
 from config.settings import settings
 import logging
 
@@ -30,7 +29,7 @@ def get_session_factory(engine: AsyncEngine):
     
     return session_factory
 
-def get_engine() -> AsyncEngine:
+def get_async_engine() -> AsyncEngine:
     """Build the async engine"""
 
     connect_args = get_connect_args()
@@ -50,9 +49,9 @@ def get_engine() -> AsyncEngine:
     return engine
 
     
-async def close_sqlalchemy(_sqlalchemy_engine: AsyncEngine):
-    """Close global SQLAlchemy engine."""
+async def close_async_engine(_async_engine: AsyncEngine):
+    """Close global async engine."""
 
-    if _sqlalchemy_engine:
-        await _sqlalchemy_engine.dispose()
+    if _async_engine:
+        await _async_engine.dispose()
         logger.info("🛑 SQLAlchemy engine disposed")

@@ -16,7 +16,7 @@ from config import settings
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
 
-from db import close_sqlalchemy, get_engine, get_session_factory
+from db import close_async_engine, get_async_engine, get_session_factory
 
 # TODO: need to make this better with the settings file
 # or for testing / local development
@@ -116,7 +116,7 @@ async def load_books():
     async_engine = None
     openai_client = None
     try:
-        async_engine = get_engine()
+        async_engine = get_async_engine()
         session_factory = get_session_factory(async_engine)
         if await table_exists(session_factory):
             print("Skipping loading books to table.")
@@ -138,7 +138,7 @@ async def load_books():
         if openai_client:
             await openai_client.close()
         if async_engine:
-            await close_sqlalchemy(async_engine)
+            await close_async_engine(async_engine)
     
     
 def main():

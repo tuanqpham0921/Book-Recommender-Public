@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncEngine
-from db import sqlalchemy
+from db import get_async_engine, get_session_factory, close_async_engine
 from config import AppConfig, settings
 from app.orchestration.orchestrator import Orchestrator
 from app.clients import OpenAIClient
@@ -41,7 +41,7 @@ def start_orchestrator() -> Orchestrator:
 
 async def start_sqlalchemy_engine():
     """Start the SQLAlchemy engine."""
-    return sqlalchemy.get_engine()
+    return get_async_engine()
 
 # --- Main startup routine ---
 async def start_all(app: FastAPI):
@@ -63,7 +63,7 @@ async def start_all(app: FastAPI):
         raise RuntimeError("SQLAlchemy startup failed")
     
     # Get the session factory from the engine
-    app.state.sqlalchemy_session_factory = sqlalchemy.get_session_factory(app.state.sqlalchemy_engine)
+    app.state.sqlalchemy_session_factory = get_session_factory(app.state.sqlalchemy_engine)
 
     # Orchestrator service
     app.state.orchestrator = start_orchestrator()

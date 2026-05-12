@@ -5,9 +5,10 @@ from typing import List, Dict, Any, Optional
 from app.common.enums import Role
 from app.common.utils import now_iso, save_file
 from app.common.messages import APIMessage, UserMessage, AssistantMessage, ToolMessage
-from app.clients.openai_client import OpenAIClient
 from app.stores.book_store import BookStore
 from app.common.sse_stream import SSEStream
+
+from clients import OpenAIClient
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +89,7 @@ class RequestContext:
             "pipeline_messages_count": len(self.pipeline_conversation),
             "chat_messages_count": len(self.chat_messages),
         }
-        
+
     def add_message(self, message: APIMessage, background: bool = True):
         """Add a message to the in-memory context and optionally persist it asynchronously."""
         if (hasattr(message, "tool_calls") and message.tool_calls) or (
@@ -127,4 +128,3 @@ class RequestContext:
     def export(self, file_name: str = "dev"):
         self.export_user_context(file_name)
         self.export_pipeline_context(file_name)
-        

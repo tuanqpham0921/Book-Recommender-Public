@@ -5,10 +5,11 @@ from fastapi import Request, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.stores.book_store import BookStore
-from app.clients import OpenAIClient
+from clients import OpenAIClient
 from app.orchestration.orchestrator import Orchestrator
 
 logger = logging.getLogger(__name__)
+
 
 def get_openai_client(request: Request) -> OpenAIClient:
     """Get the OpenAI client"""

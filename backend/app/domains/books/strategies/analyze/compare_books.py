@@ -45,7 +45,7 @@ class CompareBooks(StrategyBase):
         )
 
         # Import locally to avoid circular import
-        from app.clients.schemas import OpenAIRequest
+        from clients.schemas import OpenAIRequest
 
         req = OpenAIRequest(
             system=SystemMessage(content=prompt),

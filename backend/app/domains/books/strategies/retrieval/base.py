@@ -16,26 +16,23 @@ logger = logging.getLogger(__name__)
 from pydantic import BaseModel, Field
 from openai import pydantic_function_tool
 
+
 class llm_parse(BaseModel):
-    
+
     accepted: bool = Field(..., description="Do we accept the retrieval methods")
-    ui_message: str = Field(..., description="what to send to the user about our retrieval results")
+    ui_message: str = Field(
+        ..., description="what to send to the user about our retrieval results"
+    )
 
     async def __call__(self):
-        return {
-            "accepted": self.accepted,
-            "ui_message": self.ui_message
-        }
+        return {"accepted": self.accepted, "ui_message": self.ui_message}
 
 
 class RetrievalBase:
     """Base class for all retrieval strategy implementations."""
 
     async def __call__(
-        self, 
-        task: RetrievalTask, 
-        dependent_results, 
-        request_context: RequestContext
+        self, task: RetrievalTask, dependent_results, request_context: RequestContext
     ):
         """
         Execute the retrieval strategy.
@@ -46,7 +43,7 @@ class RetrievalBase:
             request_context: Context containing book_store, etc.
         """
         raise NotImplementedError("Subclasses must implement __call__")
-    
+
     async def _handle_tool_call(
         self, tool_calls, max_calls: int = 10, **extra_kwargs
     ) -> list[ToolMessage]:
@@ -89,15 +86,12 @@ class RetrievalBase:
                 continue
 
         return results
-    
+
     async def retrieval_post_processing(
-        self, 
-        results, 
-        task: RetrievalTask, 
-        request_context: RequestContext
+        self, results, task: RetrievalTask, request_context: RequestContext
     ):
         # Import locally to avoid circular import
-        from app.clients.schemas import OpenAIRequest
+        from clients.schemas import OpenAIRequest
 
         tool_name = llm_parse.__name__
         tool = pydantic_function_tool(
@@ -109,9 +103,9 @@ class RetrievalBase:
 
         format_books = self._format_books_for_llm([results])
         format_task = task.model_dump_json()
-        
+
         from config import BookConstraints
-        
+
         prompt = format_prompt(
             prompt_path="books/retrieval_post_processing.txt",
             in_domain_msg=str(request_context.pipeline_context["in_domain_message"]),
@@ -129,7 +123,7 @@ class RetrievalBase:
             temperature=0.7,  # Higher creativity for recommendations
             top_p=0.8,
         )
-        
+
         assistant_msg = await request_context.llm_client.execute(req)
 
         # this shouldn't happen at all but raise to be safe
@@ -141,12 +135,12 @@ class RetrievalBase:
         tool_message = await self._handle_tool_call(
             assistant_msg.tool_calls, max_calls=1
         )
-        
-        await request_context.sse_stream.send_chars(tool_message[0].content["ui_message"])
+
+        await request_context.sse_stream.send_chars(
+            tool_message[0].content["ui_message"]
+        )
         return tool_message[0].content["accepted"]
 
-    
-    
     def _format_books_for_llm(self, results):
         """Format books for LLM readability."""
         logger.debug("Formatting %d book results for LLM", len(results))
@@ -186,4 +180,3 @@ class RetrievalBase:
                 )
                 await asyncio.sleep(0.2)  # Smooth streaming
                 sent_isbn.add(book_dict["isbn13"])
-        

@@ -4,7 +4,7 @@ import time
 import pandas as pd
 
 from data.models import BookModel
-from app.clients.openai_client import OpenAIClient
+from clients.openai_client import OpenAIClient
 from config import settings
 
 # TODO
@@ -26,37 +26,41 @@ CSV_FILE = "books.csv"
 LOAD_LIMIT = 5000
 DEVELOPMENT_DATA_PATH = "data/books.csv"
 
+
 def batchify(iterable, batch_size):
     """Split an iterable into batches of specified size."""
     for i in range(0, len(iterable), batch_size):
         yield iterable[i : i + batch_size]
 
+
 async def table_exists(session_factory: async_sessionmaker[AsyncSession]):
     """Check if the table exists and has more than LOAD_LIMIT rows"""
-    
-    async with session_factory() as session:        
-        q_exists = text("""
-            select to_regclass(:fqtn) is not null as exists_;""")
-        
+
+    async with session_factory() as session:
+        q_exists = text(
+            """
+            select to_regclass(:fqtn) is not null as exists_;"""
+        )
+
         fqtn = f"{SCHEMA}.{TABLE}"
         result = await session.execute(q_exists, {"fqtn": fqtn})
         table_exists = bool(result.scalar())
-        
+
         if not table_exists:
             # schema.table doesn't exist
             print(f"Table {SCHEMA}.{TABLE} not found")
             return False
-        
+
         print(f"Table {SCHEMA}.{TABLE} found")
         # 2) Does it have > LOAD_LIMIT rows?
         # Note: identifiers (schema/table) can't be bound params, so we embed them from trusted constants.
         q_count = text(f"SELECT COUNT(*) FROM {SCHEMA}.{TABLE}")
         result = await session.execute(q_count)
         row_count = int(result.scalar() or 0)
-        
+
         print(f"Table {SCHEMA}.{TABLE} has {row_count} rows")
         return row_count > LOAD_LIMIT
-        
+
 
 def load_books_from_csv(path: str = DEVELOPMENT_DATA_PATH, limit: int | None = None):
     """Load books from CSV.
@@ -71,28 +75,36 @@ def load_books_from_csv(path: str = DEVELOPMENT_DATA_PATH, limit: int | None = N
     df = pd.read_csv(path)
     if limit is not None:
         df = df.head(limit)
-        print(f"Considering only the first {limit} CSV rows (limit applies to rows, not books)")
+        print(
+            f"Considering only the first {limit} CSV rows (limit applies to rows, not books)"
+        )
     else:
         print(f"Loading all {len(df)} rows")
 
     # Create book chunks for embedding
     return df
 
+
 async def embed_batch(batch: list[dict], openai_client: OpenAIClient) -> list[dict]:
     """Embed a batch of books using OpenAI."""
     for book in batch:
-        book.embedding=await openai_client.get_embedding(book.title + "\n\n" + book.description)
-        
+        book.embedding = await openai_client.get_embedding(
+            book.title + "\n\n" + book.description
+        )
+
     return batch
 
-async def embed_and_store_books(books: list[BookModel], 
-                                session_factory: async_sessionmaker[AsyncSession], 
-                                openai_client: OpenAIClient,
-                                batch_size: int = 10):
+
+async def embed_and_store_books(
+    books: list[BookModel],
+    session_factory: async_sessionmaker[AsyncSession],
+    openai_client: OpenAIClient,
+    batch_size: int = 10,
+):
     """Embed and store a batch of books into the database."""
     if not books:
         raise ValueError("No books to embed and store")
-    
+
     for batch in batchify(books, batch_size):
         print(f"Embedding batch {len(batch)} books")
         embedded_batch = await embed_batch(batch, openai_client)
@@ -110,6 +122,7 @@ async def embed_and_store_books(books: list[BookModel],
             raise
 
     return
+
 
 async def load_books():
     """Main function to load books from CSV/Parquet into PostgreSQL."""
@@ -139,8 +152,8 @@ async def load_books():
             await openai_client.close()
         if async_engine:
             await close_async_engine(async_engine)
-    
-    
+
+
 def main():
     """Entry point for the PostgreSQL loader."""
     start = time.perf_counter()

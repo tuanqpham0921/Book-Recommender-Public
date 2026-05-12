@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from db import get_async_engine, get_session_factory, close_async_engine
 from config import AppConfig, settings
 from app.orchestration.orchestrator import Orchestrator
-from app.clients import OpenAIClient
+from clients import OpenAIClient
 
 # TODO: there are redundant startup tasks for the same service, we should refactor this
 # and use a single startup task for all services.

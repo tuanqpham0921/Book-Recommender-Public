@@ -31,7 +31,7 @@ class RecommendBooks(StrategyBase):
         sse_stream = request_context.sse_stream
         semantic_input = task.semantic_input
         filters = task.filters or BooksFilter()
-        
+
         print("------- FILTERS --------")
         print(semantic_input)
         print(filters)
@@ -55,7 +55,7 @@ class RecommendBooks(StrategyBase):
         result = await request_context.book_store.search_by_book_filter(filters)
         if result:
             candidate_books.extend(result)
-            
+
         print("-------- Candidate Books -----")
         print(candidate_books)
         print("-------------------------------")
@@ -84,7 +84,7 @@ class RecommendBooks(StrategyBase):
         if not dependent_books:
             return [semantic_input]
 
-        from app.clients.schemas import OpenAIRequest
+        from clients.schemas import OpenAIRequest
 
         llm = request_context.llm_client
 
@@ -188,7 +188,7 @@ class RecommendBooks(StrategyBase):
         )
 
         # Import locally to avoid circular import
-        from app.clients.schemas import OpenAIRequest
+        from clients.schemas import OpenAIRequest
 
         # Create request for LLM
         req = OpenAIRequest(

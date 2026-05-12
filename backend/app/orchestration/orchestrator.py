@@ -5,7 +5,7 @@ import time
 
 from openai import pydantic_function_tool
 
-from app.clients.openai_client import OpenAIRequest
+from clients import OpenAIRequest
 from app.common.sse_stream import SSEStream
 from app.orchestration.request_context import RequestContext
 from app.common.messages import AssistantMessage, ToolMessage, SystemMessage
@@ -52,7 +52,6 @@ class Orchestrator:
                 start = time.monotonic()
                 # logger.info(f"⚡ Executing {tool_name} with args: {raw_args}")
                 logger.info(f"⚡ Executing {tool_name}")
-
 
                 result = await tool_instance(**extra_kwargs)
                 elapsed = round(time.monotonic() - start, 2)
@@ -338,8 +337,12 @@ class Orchestrator:
                 mermaid_diagram = task_planner_.get_accepted_diagram(node_ids)
                 await sse_stream.send_chars("__My Plan for Your Request__")
                 await sse_stream.send_mermaid(mermaid_diagram)
-                await sse_stream.send_chars("_Note:_ This flow shows how your query will run.\n")
-                await sse_stream.send_chars("Soon, you’ll be able to edit or customize the plan before execution for full transparency!")
+                await sse_stream.send_chars(
+                    "_Note:_ This flow shows how your query will run.\n"
+                )
+                await sse_stream.send_chars(
+                    "Soon, you’ll be able to edit or customize the plan before execution for full transparency!"
+                )
                 await sse_stream.send_divider()
             else:
                 await sse_stream.send_error("Unable to generate a Task Planner")
@@ -389,12 +392,16 @@ class Orchestrator:
         except asyncio.CancelledError:
             # Raised if server reloads or client disconnects mid-stream
             logger.info("🛑 Orchestration cancelled before shutdown or client abort.")
-            await sse_stream.send_error(f"Oh no... orchestration server while processing your query.")
+            await sse_stream.send_error(
+                f"Oh no... orchestration server while processing your query."
+            )
 
         except Exception as e:
             logger.exception(f"❌ Unhandled orchestrator error: {e}")
             # await sse_stream.send_error(f"Internal error: {str(e)}")
-            await sse_stream.send_error(f"Hmm... something went wrong while processing your query.")
+            await sse_stream.send_error(
+                f"Hmm... something went wrong while processing your query."
+            )
 
         finally:
             # Important: close here to unblock endpoint's `async for`

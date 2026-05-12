@@ -3,8 +3,6 @@ import asyncio
 import time
 import pandas as pd
 
-from tqdm import tqdm
-
 from data.models import BookModel
 from app.clients.openai_client import OpenAIClient
 from config import settings
@@ -32,16 +30,6 @@ def batchify(iterable, batch_size):
     """Split an iterable into batches of specified size."""
     for i in range(0, len(iterable), batch_size):
         yield iterable[i : i + batch_size]
-
-# TODO: need to add a clean function to clean the data and remove the rows that are not valid
-def clean_numeric_value(value):
-    """Clean and convert numeric values, return None if invalid."""
-    if pd.isna(value) or value == "" or value == "nan":
-        return None
-    try:
-        return float(value)
-    except (ValueError, TypeError):
-        return None
 
 async def table_exists(session_factory: async_sessionmaker[AsyncSession]):
     """Check if the table exists and has more than LOAD_LIMIT rows"""
@@ -118,15 +106,15 @@ async def embed_and_store_books(books: list[BookModel],
                 await session.commit()
             print(f"Committed batch {len(embedded_batch)} books")
         except Exception as e:
-            # print(f"Error committing batch {batch_count}: {e}")
             print(f"Error committing batch: {e}")
-            raise e
-    
-    await openai_client.close()
+            raise
+
     return
 
 async def load_books():
     """Main function to load books from CSV/Parquet into PostgreSQL."""
+    async_engine = None
+    openai_client = None
     try:
         async_engine = get_engine()
         session_factory = get_session_factory(async_engine)
@@ -135,20 +123,22 @@ async def load_books():
             return
 
         print("Loading Books from CSV")
-        books = load_books_from_csv(limit=100)
-        print(f"Loaded {len(books)} books from CSV (after title/description filter)")
-        
-        # Prepare books for embedding and storage
+        books_df = load_books_from_csv(limit=100)
+        print(f"Loaded {len(books_df)} rows from CSV")
+
         from ingestion.normalize import prepare_books
-        books = prepare_books(books)
+
+        books = prepare_books(books_df)
 
         openai_client = OpenAIClient(api_key=settings.openai.API_KEY)
         print("Embedding and Storing Books into PostgreSQL")
         await embed_and_store_books(books, session_factory, openai_client)
         print("Books embedded and stored successfully")
     finally:
-        await openai_client.close()
-        await close_sqlalchemy(async_engine)
+        if openai_client:
+            await openai_client.close()
+        if async_engine:
+            await close_sqlalchemy(async_engine)
     
     
 def main():

@@ -54,10 +54,9 @@ async def start_all(app: FastAPI):
     if not app.state.openai_client:
         raise RuntimeError("OpenAI client startup failed")
 
-    # SQLAlchemy returns tuple (engine, session_factory)
-    # TODO: need to add testing to ensure table exists before starting the application.
-    # or in the correct schema, extensions, etc.
-    app.state.sqlalchemy_engine= await _startup_task(
+    # Engine first; session factory is derived from the same engine (single pool).
+    # TODO: optional health check / migrations before accepting traffic.
+    app.state.sqlalchemy_engine = await _startup_task(
         "SQLAlchemy", start_sqlalchemy_engine, AppConfig.DATABASE_TIMEOUT
     )
     if not app.state.sqlalchemy_engine:

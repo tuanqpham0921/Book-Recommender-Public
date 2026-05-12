@@ -1,9 +1,15 @@
 [tool.poetry]
 name = "book-recommender"
-version = "0.1.0"
+version = "1.0.0"
 description = ""
 authors = ["Tuan Pham <tuanqpham0921@gmail.com>"]
-packages = [{ include = "app" }]
+packages = [
+    { include = "app" },
+    { include = "db" },
+    { include = "config" },
+    { include = "data" },
+    { include = "ingestion" },
+]
 
 [tool.poetry.dependencies]
 python = "^3.11"

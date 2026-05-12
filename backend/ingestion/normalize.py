@@ -16,7 +16,6 @@ def clean_numeric_value(value):
 
 def prepare_books(df: pd.DataFrame) -> list[BookModel]:
     """Prepare books for embedding and storage."""
-        # Create book chunks for embedding
     books = []
 
     print("\nPreparing books for embedding")

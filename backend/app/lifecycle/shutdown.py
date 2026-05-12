@@ -2,6 +2,7 @@ import logging
 import asyncio
 from fastapi import FastAPI
 
+from db import close_sqlalchemy
 
 logger = logging.getLogger(__name__)
 
@@ -10,7 +11,7 @@ async def shutdown_sqlalchemy_engine(app: FastAPI):
     engine = getattr(app.state, "sqlalchemy_engine", None)
     if engine:
         try:
-            await engine.dispose()
+            await close_sqlalchemy(engine)
             logger.info("🧹 SQLAlchemy engine disposed")
         except Exception as e:
             logger.warning(f"⚠️ Failed to close SQLAlchemy: {e.__class__.__name__}")

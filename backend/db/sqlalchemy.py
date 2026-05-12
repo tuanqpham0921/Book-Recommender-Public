@@ -1,112 +1,56 @@
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+from sqlalchemy.ext.asyncio import (
+    AsyncSession,
+    AsyncEngine,
+    create_async_engine,
+    async_sessionmaker,
+)
+
 from sqlalchemy import text
 from config.settings import settings
 import logging
 
 logger = logging.getLogger(__name__)
 
-
-async def init_sqlalchemy():
-    """Initialize global SQLAlchemy engine with pgvector support."""
-
-    try:
-        # Connection arguments for Cloud SQL
-        connect_args = {
-            "server_settings": {
-                "application_name": "book-recommender-backend",
-            }
+def get_connect_args():
+    """Get the connection arguments for the SQLAlchemy engine."""
+    # In the future, we can add more connection arguments here.
+    return {
+        "server_settings": {
+            "application_name": settings.app.NAME,
         }
+    }
+    
+def get_session_factory(engine: AsyncEngine):
+    """Get the session factory for the SQLAlchemy engine."""
+    session_factory = async_sessionmaker(
+        engine,
+        class_=AsyncSession,
+        expire_on_commit=False,  # Keep objects usable after commit
+    )
+    
+    return session_factory
 
-        # Add Cloud SQL specific settings if using socket connection
-        if settings.sqlalchemy.HOST.startswith("/cloudsql/"):
-            connect_args.update(
-                {
-                    # Note: connect_timeout is not supported by the asyncpg driver via SQLAlchemy
-                    "server_settings": {
-                        "application_name": "book-recommender-backend",
-                    },
-                }
-            )
+def get_engine() -> AsyncEngine:
+    """Build the async engine"""
 
-        logger.info(
-            f"🔗 Connecting to SQLAlchemy: {settings.sqlalchemy.sqlalchemy_url.replace(settings.sqlalchemy.PASSWORD, '***')}"
-        )
+    connect_args = get_connect_args()
 
-        # Create async engine with connection pooling
-        _sqlalchemy_engine = create_async_engine(
-            settings.sqlalchemy.sqlalchemy_url,
-            # Connection pool settings optimized for Cloud SQL
-            pool_size=settings.sqlalchemy.MIN_CONNECTIONS,
-            max_overflow=settings.sqlalchemy.MAX_CONNECTIONS
-            - settings.sqlalchemy.MIN_CONNECTIONS,
-            pool_pre_ping=True,  # Validate connections before use
-            pool_recycle=1800,  # Recycle connections every 30 minutes (Cloud SQL friendly)
-            pool_timeout=60,  # Wait up to 60 seconds for a connection
-            # echo=settings.debug, # Log SQL queries in debug mode
-            connect_args=connect_args,
-        )
+    engine = create_async_engine(
+        settings.sqlalchemy.sqlalchemy_url,
+        # Connection pool settings optimized for Cloud SQL
+        pool_size=settings.sqlalchemy.MIN_CONNECTIONS,
+        max_overflow=settings.sqlalchemy.MAX_CONNECTIONS
+        - settings.sqlalchemy.MIN_CONNECTIONS,
+        pool_pre_ping=True,  # Validate connections before use
+        pool_recycle=1800,   # Recycle connections every 30 minutes (Cloud SQL friendly)
+        pool_timeout=60,     # Wait up to 60 seconds for a connection
+        # echo=settings.debug, # Log SQL queries in debug mode
+        connect_args=connect_args,
+    )
+    return engine
 
-        # TODO: Move this to a separate function
-        # Test connection and setup pgvector
-        async with _sqlalchemy_engine.begin() as conn:
-            # Test connection
-            await conn.execute(text("SELECT 1"))
-            logger.info("✅ Database connection test successful")
-
-            # Enable pgvector extension
-            await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
-            logger.info("✅ pgvector extension enabled")
-
-            # Import models to ensure they're registered
-            from data.models import BookModel, Base
-
-            # Create tables if they don't exist (for development)
-            # In production, you should use Alembic migrations
-            try:
-                # Check if books table exists
-                result = await conn.execute(
-                    text(
-                        """
-                    SELECT EXISTS (
-                        SELECT FROM information_schema.tables 
-                        WHERE table_schema = 'public' 
-                        AND table_name = 'books'
-                    )
-                """
-                    )
-                )
-                table_exists = result.scalar()
-
-                if table_exists:
-                    logger.info("✅ Books table already exists")
-                else:
-                    logger.info(
-                        "⚠️ Books table not found — apply migrations or init SQL if you expect it"
-                    )
-
-            except Exception as e:
-                logger.warning(f"⚠️ Could not check table existence: {e}")
-
-        logger.info("✅ SQLAlchemy engine initialized successfully")
-
-        # Create session factory
-        _sqlalchemy_session_factory = async_sessionmaker(
-            _sqlalchemy_engine,
-            class_=AsyncSession,
-            expire_on_commit=False,  # Keep objects usable after commit
-        )
-
-        return _sqlalchemy_engine, _sqlalchemy_session_factory
-
-    except Exception as e:
-        logger.error(f"❌ SQLAlchemy initialization failed: {e}")
-        logger.error(
-            f"   Database URL: {settings.sqlalchemy.sqlalchemy_url.replace(settings.sqlalchemy.PASSWORD, '***')}"
-        )
-        return None, None
-
-
-async def close_sqlalchemy(_sqlalchemy_engine):
+    
+async def close_sqlalchemy(_sqlalchemy_engine: AsyncEngine):
     """Close global SQLAlchemy engine."""
 
     if _sqlalchemy_engine:

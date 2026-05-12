@@ -1,6 +1,7 @@
-from .sqlalchemy import init_sqlalchemy, close_sqlalchemy
+from .sqlalchemy import get_engine, get_session_factory, close_sqlalchemy
 
 __all__ = [
-    "init_sqlalchemy",
+    "get_engine",
+    "get_session_factory",
     "close_sqlalchemy",
 ]

@@ -3,6 +3,7 @@ from typing import List
 
 
 class AppSettings(BaseSettings):
+    NAME: str
     ENVIRONMENT: str
     ALLOW_ORIGINS: str
     EXPORT_DIR: str

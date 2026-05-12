@@ -51,7 +51,7 @@ async def table_exists(session_factory: async_sessionmaker[AsyncSession]):
             print(f"❌ Table {SCHEMA}.{TABLE} not found")
             return False
 
-        print(f"Table {SCHEMA}.{TABLE} found")
+        print(f"✅ Table {SCHEMA}.{TABLE} found")
         # 2) Does it have > LOAD_LIMIT rows?
         # Note: identifiers (schema/table) can't be bound params, so we embed them from trusted constants.
         q_count = text(f"SELECT COUNT(*) FROM {SCHEMA}.{TABLE}")
@@ -132,13 +132,11 @@ async def load_books():
         async_engine = get_async_engine()
         session_factory = get_session_factory(async_engine)
         if await table_exists(session_factory):
-            print("✅ Table exists, ready to use.")
+            print("✅ Table exists, ready to use!")
             return
-
-        return
     
         print("Loading Books from CSV")
-        books_df = load_books_from_csv(limit=100)
+        books_df = load_books_from_csv()
         print(f"Loaded {len(books_df)} rows from CSV")
 
         from ingestion.normalize import prepare_books

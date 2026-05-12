@@ -4,7 +4,7 @@ from typing import Any, AsyncGenerator
 from fastapi import Request, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.stores.book_store import BookStore
+from db.stores.book_store import BookStore
 from clients import OpenAIClient
 from app.orchestration.orchestrator import Orchestrator
 

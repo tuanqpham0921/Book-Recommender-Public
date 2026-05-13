@@ -3,6 +3,14 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
 from config.bootstrap import DatabaseConstants, IngestionConstants
 from db.schema import BookModel
 
+async def check_connection(
+    session_factory: async_sessionmaker[AsyncSession],
+):
+    """Check if the connection is established"""
+    async with session_factory() as session:
+        result = await session.execute(text("SELECT 1"))
+        return result.scalar() == 1
+
 async def check_table(
     session_factory: async_sessionmaker[AsyncSession],
     schema: str = DatabaseConstants.SCHEMA,

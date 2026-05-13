@@ -55,3 +55,14 @@ async def close_async_engine(_async_engine: AsyncEngine):
     if _async_engine:
         await _async_engine.dispose()
         logger.info("🛑 SQLAlchemy engine disposed")
+        
+async def check_connection(session: AsyncSession) -> bool:
+    """Check if the database connection is established.
+    
+    Args:
+        session: An async session.
+    """
+    import sqlalchemy.text as text
+    
+    result = await session.execute(text("SELECT 1"))
+    return result.scalar() == 1

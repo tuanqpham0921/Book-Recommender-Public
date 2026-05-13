@@ -23,6 +23,8 @@ from db import (
     is_ready
 )
 
+from config.bootstrap import DatabaseConstants, IngestionConstants
+
 def batchify(iterable, batch_size):
     """Split an iterable into batches of specified size."""
     for i in range(0, len(iterable), batch_size):
@@ -95,15 +97,21 @@ async def embed_and_store_books(
 
 async def load_books():
     """Main function to load books from CSV/Parquet into PostgreSQL."""
-    async_engine = None
-    openai_client = None
     try:
         async_engine = get_async_engine()
+        openai_client = OpenAIClient(api_key=settings.openai.API_KEY)
+        
+        async_engine = get_async_engine()
         session_factory = get_session_factory(async_engine)
-        if await is_ready(session_factory):
-            print("✅ Table exists, ready to use!")
+        report = await is_ready(
+            session_factory, schema=DatabaseConstants.SCHEMA, 
+            table=BookModel.__tablename__,
+            min_rows=IngestionConstants.APPROXIMATE_LOAD_LIMIT)
+
+        if report.ok:
+            print("Database already ready; skipping ingestion.")
             return
-    
+
         print("Loading Books from CSV")
         books_df = load_books_from_csv()
         print(f"Loaded {len(books_df)} rows from CSV")
@@ -115,12 +123,12 @@ async def load_books():
         print("Embedding and Storing Books into PostgreSQL")
         await embed_and_store_books(books, session_factory, openai_client)
         print("Books embedded and stored successfully")
+
     finally:
-        if openai_client:
-            await openai_client.close()
         if async_engine:
             await close_async_engine(async_engine)
-
+        if openai_client:
+            await openai_client.close()
 
 def main():
     """Entry point for the PostgreSQL loader."""

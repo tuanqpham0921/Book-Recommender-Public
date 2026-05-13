@@ -28,16 +28,16 @@ def batchify(iterable, batch_size):
     for i in range(0, len(iterable), batch_size):
         yield iterable[i : i + batch_size]
 
-def load_books_from_csv(path: str = settings.postgres.DATA_PATH, 
+def load_books_from_csv(path: str = settings.app.DATA_DIR, 
                         csv_file: str = IngestionConstants.CSV_FILE,
-                        limit: int | None = IngestionConstants.APPROXIMATE_LOAD_LIMIT):
+                        limit: int = None):
     """Load books from CSV.
 
     ``limit`` caps how many **CSV rows** are read (via ``head``), not how many
     valid books you end up with—rows missing title/description are skipped, so
     the book list can be smaller than ``limit``.
     """
-    path = settings.postgres.DATA_PATH + csv_file
+    path = os.path.join(path, csv_file)
     if not os.path.exists(path):
         raise FileNotFoundError(f"File {path} does not exist")
 

@@ -5,7 +5,11 @@ class AppConfig:
     DATABASE_TIMEOUT = 10.0  # SQLAlchemy engine init / connectivity
     OPENAI_TIMEOUT   = 10.0
     DEFAULT_TIMEOUT  = 10.0
-    
+
+class DatabaseConstants:
+    """Database constants."""
+    SCHEMA = "public"
+
 
 class BookGuides:
     CLASSICAL_YEAR    = "before 1900"

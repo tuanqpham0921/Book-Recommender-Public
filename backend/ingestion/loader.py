@@ -7,23 +7,16 @@ from db.schema import BookModel
 from clients.openai_client import OpenAIClient
 from config import settings
 from config.bootstrap import IngestionConstants
-# TODO
-# need to add function comments
-# need to add optimizations
-# need to stream the csv file? or make it better
-# DETAIL:  Key (isbn13)=(9780002005883) already exists.
-
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
 
 from db import (
-    close_async_engine, 
-    get_async_engine, 
+    bootstrap_schema,
+    close_async_engine,
+    get_async_engine,
     get_session_factory,
-    is_ready
+    is_ready,
 )
-
-from config.bootstrap import DatabaseConstants, IngestionConstants
+from config.bootstrap import DatabaseConstants
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 def batchify(iterable, batch_size):
     """Split an iterable into batches of specified size."""
@@ -97,38 +90,55 @@ async def embed_and_store_books(
 
 async def load_books():
     """Main function to load books from CSV/Parquet into PostgreSQL."""
+    async_engine = None
+    openai_client = None
+    schema=DatabaseConstants.SCHEMA
+    table=BookModel.__tablename__
+    
+    print(f"Running ingestion for schema: {schema} and table: {table}")
     try:
-        async_engine = get_async_engine()
-        openai_client = OpenAIClient(api_key=settings.openai.API_KEY)
-        
+        # Get database connection
         async_engine = get_async_engine()
         session_factory = get_session_factory(async_engine)
-        report = await is_ready(
-            session_factory, schema=DatabaseConstants.SCHEMA, 
-            table=BookModel.__tablename__,
-            min_rows=IngestionConstants.APPROXIMATE_LOAD_LIMIT)
-
-        if report.ok:
-            print("Database already ready; skipping ingestion.")
+        
+        # bootstrap schema
+        await bootstrap_schema(session_factory)
+        
+        # Check if database is ready or need to skip ingestion
+        ready_report = await is_ready(session_factory, 
+                                      schema=schema, 
+                                      table=table, 
+                                      min_rows=IngestionConstants.APPROXIMATE_LOAD_LIMIT)
+        if ready_report.ok:
+            print(f"Database already has enough rows; skipping ingestion for schema: {schema} and table: {table}")
             return
-
+        else:
+            failed_checks = [check for check in ready_report.checks if not check.ok]
+            # This should only failed if there's not enough rows in the table
+            # But in the future, as we have more extensions, we might need to add more checks
+            print(f"Failed checks: {failed_checks}, continuing with ingestion")
+            
+        # Load books from CSV
         print("Loading Books from CSV")
         books_df = load_books_from_csv()
         print(f"Loaded {len(books_df)} rows from CSV")
 
+        # Normalize books
         from ingestion.normalize import prepare_books
         books = prepare_books(books_df)
 
+        # Embed and store books
         openai_client = OpenAIClient(api_key=settings.openai.API_KEY)
         print("Embedding and Storing Books into PostgreSQL")
+        
         await embed_and_store_books(books, session_factory, openai_client)
         print("Books embedded and stored successfully")
-
+        
+    except Exception as e:
+        raise ValueError(f"Error ingesting books: {e}")
     finally:
         if async_engine:
             await close_async_engine(async_engine)
-        if openai_client:
-            await openai_client.close()
 
 def main():
     """Entry point for the PostgreSQL loader."""

@@ -16,6 +16,7 @@ from db.async_engine import check_connection
 @dataclass(frozen=True, slots=True)
 class CheckResult:
     """Result of a single readiness check."""
+
     name: str
     ok: bool
     message: str
@@ -25,6 +26,7 @@ class CheckResult:
 @dataclass(frozen=True, slots=True)
 class ReadinessReport:
     """Report on the readiness of the database."""
+
     checks: list[CheckResult] = field(default_factory=list)
 
     @property
@@ -37,11 +39,11 @@ class ReadinessReport:
 
 def log_readiness_report(report: ReadinessReport) -> None:
     """Emit one log line per failed check; summarize when all checks pass.
-    
+
     Args:
         report: A report on the readiness of the database.
     """
-    
+
     for check in report.checks:
         if check.ok:
             logger.debug(
@@ -61,6 +63,7 @@ def log_readiness_report(report: ReadinessReport) -> None:
     if report.ok:
         logger.info("Database readiness checks passed.")
 
+
 async def _check_table(
     session: AsyncSession,
     *,
@@ -68,13 +71,13 @@ async def _check_table(
     table: str,
 ) -> CheckResult:
     """Check if the table exists and the schema is correct.
-    
+
     Args:
         session: An async session.
         schema: The schema to check.
         table: The table to check.
     """
-    
+
     fqtn = f"{schema}.{table}"
     try:
         result = await session.execute(
@@ -98,7 +101,7 @@ async def _check_table(
         )
 
 
-async def _check_table_has_rows(
+async def has_minimum_books(
     session: AsyncSession,
     *,
     schema: str,
@@ -106,7 +109,7 @@ async def _check_table_has_rows(
     min_rows: int,
 ) -> CheckResult:
     """Check if the table has at least the minimum number of rows.
-    
+
     Args:
         session: An async session.
         schema: The schema to check.
@@ -121,9 +124,7 @@ async def _check_table_has_rows(
         return CheckResult(
             name="rows",
             ok=ok,
-            message=(
-                f"Table {fqtn} has {row_count} rows (need at least {min_rows})."
-            ),
+            message=(f"Table {fqtn} has {row_count} rows (need at least {min_rows})."),
             details={"row_count": row_count, "min_rows": min_rows},
         )
     except Exception as exc:
@@ -138,7 +139,7 @@ async def _check_table_has_rows(
 
 async def _check_table_extensions(session: AsyncSession) -> CheckResult:
     """Check if the required PostgreSQL extensions are installed.
-    
+
     Args:
         session: An async session.
     """
@@ -180,10 +181,10 @@ async def is_ready(
     schema: str,
     table: str,
     *,
-    min_rows: int
+    min_rows: int,
 ) -> ReadinessReport:
     """Run database readiness checks and return a structured report.
-    
+
     Args:
         session_factory: A factory for creating async sessions.
         schema: The schema to check.
@@ -202,7 +203,7 @@ async def is_ready(
         checks.append(table_check)
 
         # check if table has rows
-        rows = await _check_table_has_rows(
+        rows = await has_minimum_books(
             session,
             schema=schema,
             table=table,
@@ -215,28 +216,34 @@ async def is_ready(
 
     return ReadinessReport(checks=checks)
 
+
 # -----------------------------------------------------------------------------
 # For testing purposes
-# poetry run python db/readiness.py 
+# poetry run python db/readiness.py
 # -----------------------------------------------------------------------------
 async def main() -> None:
-    from db.async_engine import close_async_engine, get_async_engine, get_session_factory
+    from db.async_engine import (
+        close_async_engine,
+        get_async_engine,
+        get_session_factory,
+    )
     from config.bootstrap import DatabaseConstants, IngestionConstants
     from db.schema import BookModel
+
     try:
         engine = get_async_engine()
         schema = DatabaseConstants.SCHEMA
         table = BookModel.__tablename__
         min_rows = IngestionConstants.APPROXIMATE_LOAD_LIMIT
-        
+
         session_factory = get_session_factory(engine)
-        report = await is_ready(session_factory, schema=schema, table=table, min_rows=min_rows)
+        report = await is_ready(
+            session_factory, schema=schema, table=table, min_rows=min_rows
+        )
         log_readiness_report(report)
     finally:
         if engine:
             await close_async_engine(engine)
-
-    
 
 
 if __name__ == "__main__":

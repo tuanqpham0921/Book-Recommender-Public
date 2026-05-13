@@ -62,7 +62,9 @@ async def check_connection(session: AsyncSession) -> bool:
     Args:
         session: An async session.
     """
-    import sqlalchemy.text as text
-    
-    result = await session.execute(text("SELECT 1"))
-    return result.scalar() == 1
+    try:
+        from sqlalchemy import text
+        result = await session.execute(text("SELECT 1"))
+        return result.scalar() == 1
+    except Exception as e:
+        raise e

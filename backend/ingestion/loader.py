@@ -3,7 +3,7 @@ import asyncio
 import time
 import pandas as pd
 
-from data.models import BookModel
+from db.schema import BookModel import BookModel
 from clients.openai_client import OpenAIClient
 from config import settings
 from config.bootstrap import IngestionConstants

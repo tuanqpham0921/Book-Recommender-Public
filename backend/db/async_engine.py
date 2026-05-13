@@ -10,7 +10,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def get_connect_args():
+def _get_connect_args():
     """Get the connection arguments for the SQLAlchemy engine."""
     # In the future, we can add more connection arguments here.
     return {
@@ -32,7 +32,7 @@ def get_session_factory(engine: AsyncEngine):
 def get_async_engine() -> AsyncEngine:
     """Build the async engine"""
 
-    connect_args = get_connect_args()
+    connect_args = _get_connect_args()
 
     engine = create_async_engine(
         settings.sqlalchemy.sqlalchemy_url,
@@ -62,9 +62,7 @@ async def check_connection(session: AsyncSession) -> bool:
     Args:
         session: An async session.
     """
-    try:
-        from sqlalchemy import text
-        result = await session.execute(text("SELECT 1"))
-        return result.scalar() == 1
-    except Exception as e:
-        raise e
+    from sqlalchemy import text
+    result = await session.execute(text("SELECT 1"))
+    return result.scalar() == 1
+    

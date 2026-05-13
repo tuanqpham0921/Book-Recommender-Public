@@ -16,45 +16,17 @@ from config.bootstrap import IngestionConstants
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
 
-from db import close_async_engine, get_async_engine, get_session_factory
+from db import (
+    close_async_engine, 
+    get_async_engine, 
+    get_session_factory,
+    is_ready
+)
 
 def batchify(iterable, batch_size):
     """Split an iterable into batches of specified size."""
     for i in range(0, len(iterable), batch_size):
         yield iterable[i : i + batch_size]
-
-
-async def table_exists(session_factory: async_sessionmaker[AsyncSession]):
-    """Check if the table exists and has more than LOAD_LIMIT rows"""
-
-    SCHEMA = settings.postgres.SCHEMA
-    TABLE = settings.postgres.TABLE
-
-    async with session_factory() as session:
-        q_exists = text(
-            """
-            select to_regclass(:fqtn) is not null as exists_;"""
-        )
-
-        fqtn = f"{SCHEMA}.{TABLE}"
-        result = await session.execute(q_exists, {"fqtn": fqtn})
-        table_exists = bool(result.scalar())
-
-        if not table_exists:
-            # schema.table doesn't exist
-            print(f"❌ Table {SCHEMA}.{TABLE} not found")
-            return False
-
-        print(f"✅ Table {SCHEMA}.{TABLE} found")
-        # 2) Does it have > LOAD_LIMIT rows?
-        # Note: identifiers (schema/table) can't be bound params, so we embed them from trusted constants.
-        q_count = text(f"SELECT COUNT(*) FROM {SCHEMA}.{TABLE}")
-        result = await session.execute(q_count)
-        row_count = int(result.scalar() or 0)
-
-        print(f"Table {SCHEMA}.{TABLE} has {row_count} rows")
-        return row_count > IngestionConstants.APPROXIMATE_LOAD_LIMIT
-
 
 def load_books_from_csv(path: str = settings.postgres.DATA_PATH, 
                         csv_file: str = IngestionConstants.CSV_FILE,
@@ -128,7 +100,7 @@ async def load_books():
     try:
         async_engine = get_async_engine()
         session_factory = get_session_factory(async_engine)
-        if await table_exists(session_factory):
+        if await is_ready(session_factory):
             print("✅ Table exists, ready to use!")
             return
     

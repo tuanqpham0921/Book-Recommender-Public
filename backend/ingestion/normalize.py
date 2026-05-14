@@ -12,17 +12,15 @@ def clean_numeric_value(value):
         return float(value)
     except (ValueError, TypeError):
         return None
-
-
-def prepare_books(df: pd.DataFrame) -> list[BookModel]:
+    
+def prepare_chunk(chunk: pd.DataFrame) -> list[BookModel]:
     """Prepare books for embedding and storage."""
-    books = []
+    cleaned_chunk = []
 
-    print("\nPreparing books for embedding")
-    for idx, row in df.iterrows():
+    for idx, row in chunk.iterrows():
         if pd.notna(row["title"]) and pd.notna(row["description"]):
-            book_chunk = {
-                "isbn13": str(row.get("isbn13", "")),
+            cleaned_chunk.append({
+                "isbn13": str(row.get("isbn13")),
                 "title": str(row["title"]),
                 "authors": str(row.get("authors", "")),
                 "categories": str(row.get("categories", "")),
@@ -46,18 +44,9 @@ def prepare_books(df: pd.DataFrame) -> list[BookModel]:
                 ),
                 "thumbnail": str(row.get("thumbnail", "")),
                 "title_and_subtiles": str(row.get("title_and_subtiles", "")),
-                # "anger": clean_numeric_value(row.get("anger")) or 0.0,
-                # "disgust": clean_numeric_value(row.get("disgust")) or 0.0,
-                # "fear": clean_numeric_value(row.get("fear")) or 0.0,
-                # "joy": clean_numeric_value(row.get("joy")) or 0.0,
-                # "sadness": clean_numeric_value(row.get("sadness")) or 0.0,
-                # "surprise": clean_numeric_value(row.get("surprise")) or 0.0,
-                # "neutral": clean_numeric_value(row.get("neutral")) or 0.0,
-            }
-            # convert to BookModel
-            books.append(BookModel(**book_chunk))  
-    return books
+            })
 
+    return cleaned_chunk
 
 
 # -----------------------

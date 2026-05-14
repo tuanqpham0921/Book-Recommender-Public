@@ -16,39 +16,8 @@ from db import (
     is_ready,
 )
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
-
-def batchify(iterable, batch_size):
-    """Split an iterable into batches of specified size."""
-    for i in range(0, len(iterable), batch_size):
-        yield iterable[i : i + batch_size]
-
-def load_books_from_csv(
-    path: Path | str = FilesLocationConstants.DATA_DIR,
-    csv_file: str = FilesLocationConstants.CSV_FILE,
-    limit: int = None,
-):
-    """Load books from CSV.
-
-    ``limit`` caps how many **CSV rows** are read (via ``head``), not how many
-    valid books you end up with—rows missing title/description are skipped, so
-    the book list can be smaller than ``limit``.
-    """
-    csv_path = Path(path) / csv_file
-    if not csv_path.exists():
-        raise FileNotFoundError(f"File {csv_path} does not exist")
-
-    df = pd.read_csv(csv_path)
-    if limit is not None:
-        df = df.head(limit)
-        print(
-            f"Considering only the first {limit} CSV rows (limit applies to rows, not books)"
-        )
-    else:
-        print(f"Loading all {len(df)} rows")
-
-    # Create book chunks for embedding
-    return df
-
+from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy.dialects.postgresql import insert
 
 async def embed_batch(batch: list[dict], openai_client: OpenAIClient) -> list[dict]:
     """Embed a batch of books using OpenAI."""
@@ -59,34 +28,51 @@ async def embed_batch(batch: list[dict], openai_client: OpenAIClient) -> list[di
 
     return batch
 
+def iter_books_from_csv(csv_path: Path, *, chunksize: int = 10, limit: int | None = None):
+    from ingestion.normalize import prepare_chunk
+    
+    rows_seen = 0
+    for chunk in pd.read_csv(csv_path, chunksize=chunksize):
+        cleaned_chunk = prepare_chunk(chunk)
+        if limit is not None and len(cleaned_chunk) + rows_seen > limit:
+            remaining = limit - rows_seen 
+            if remaining <= 0:
+                break
+            cleaned_chunk = cleaned_chunk[:remaining]
+            
+        rows_seen += len(cleaned_chunk)
+        
+        yield cleaned_chunk  
+        
+        if limit is not None and rows_seen >= limit:
+            break
+        
 
-async def embed_and_store_books(
-    books: list[BookModel],
+async def store_books(
+    batch: list[dict],
     session_factory: async_sessionmaker[AsyncSession],
-    openai_client: OpenAIClient,
-    batch_size: int = IngestionConstants.BATCH_SIZE,
-):
-    """Embed and store a batch of books into the database."""
-    if not books:
-        raise ValueError("❌ No books to embed and store")
-
-    for batch in batchify(books, batch_size):
-        print(f"Embedding batch {len(batch)} books")
-        embedded_batch = await embed_batch(batch, openai_client)
-
-        if not embedded_batch:
-            continue
-
-        try:
-            async with session_factory() as session:
-                session.add_all(embedded_batch)
-                await session.commit()
-            print(f"✅Committed batch {len(embedded_batch)} books")
-        except Exception as e:
-            print(f"❌ Error committing batch: {e}")
-            raise
-
-    return
+) -> int:
+    if not batch:
+        return 0
+    table = BookModel.__table__
+    stmt = insert(table).values(batch)
+    update_columns = {
+        column.name: stmt.excluded[column.name]
+        for column in table.columns
+        if column.name != "isbn13"
+    }
+    stmt = stmt.on_conflict_do_update(
+        index_elements=["isbn13"],
+        set_=update_columns,
+    )
+    try:
+        async with session_factory() as session:
+            result = await session.execute(stmt)
+            await session.commit()
+        return result.rowcount or 0
+    except Exception as e:
+        print(f"❌ Error committing batch: {e}")
+        return 0
 
 
 async def load_books():
@@ -95,6 +81,7 @@ async def load_books():
     openai_client = None
     schema=DatabaseConstants.SCHEMA
     table=BookModel.__tablename__
+    csv_path = Path(FilesLocationConstants.DATA_DIR) / FilesLocationConstants.CSV_FILE
     
     print(f"Running ingestion for schema: {schema} and table: {table}")
     try:
@@ -110,33 +97,26 @@ async def load_books():
                                       schema=schema, 
                                       table=table, 
                                       min_rows=IngestionConstants.APPROXIMATE_LOAD_LIMIT)
-        if ready_report.ok:
-            print(f"Database already has enough rows; skipping ingestion for schema: {schema} and table: {table}")
-            return
-
         ready_report.log()
-
-        # Load books from CSV
-        print("Loading Books from CSV")
-        books_df = load_books_from_csv()
-        print(f"Loaded {len(books_df)} rows from CSV")
-
-        # Normalize books
-        from ingestion.normalize import prepare_books
-        books = prepare_books(books_df)
-
-        # Embed and store books
-        openai_client = OpenAIClient(api_key=settings.openai.API_KEY)
-        print("Embedding and Storing Books into PostgreSQL")
         
-        await embed_and_store_books(books, session_factory, openai_client)
-        print("Books embedded and stored successfully")
+        print("Storing Books into PostgreSQL")
+        total_books_stored = 0
+        total_books = 0
+        # Store books
+        for batch in iter_books_from_csv(csv_path):
+            total_books += len(batch)
+            total_books_stored += await store_books(batch, session_factory)
+        
+        print(f"✅ Stored {total_books_stored} books out of {total_books}")
+        print("Books stored successfully")
         
     except Exception as e:
         raise ValueError(f"Error ingesting books: {e}")
     finally:
         if async_engine:
             await close_async_engine(async_engine)
+        if openai_client:
+            await openai_client.close()
 
 def main():
     """Entry point for the PostgreSQL loader."""

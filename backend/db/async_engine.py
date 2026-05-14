@@ -31,7 +31,6 @@ def get_session_factory(engine: AsyncEngine):
 
 def get_async_engine() -> AsyncEngine:
     """Build the async engine"""
-
     connect_args = _get_connect_args()
 
     engine = create_async_engine(

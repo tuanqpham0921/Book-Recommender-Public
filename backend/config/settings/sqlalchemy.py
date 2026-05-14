@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
+from config.constants import FilesLocationConstants
 
 class SQLAlchemySettings(BaseSettings):
     """Connection and pool settings for the async SQLAlchemy engine (PostgreSQL + asyncpg)."""
@@ -23,7 +23,7 @@ class SQLAlchemySettings(BaseSettings):
             return f"postgresql+asyncpg://{self.USER}:{self.PASSWORD}@{self.HOST}:{self.PORT}/{self.DB}"
 
     model_config = SettingsConfigDict(
-        env_file="config/.env",
+        env_file=FilesLocationConstants.ENV_FILE,
         env_prefix="POSTGRES_",
         env_file_encoding="utf-8",
         extra="ignore",

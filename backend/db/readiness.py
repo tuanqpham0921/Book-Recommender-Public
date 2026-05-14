@@ -37,31 +37,27 @@ class ReadinessReport:
         return next((check for check in self.checks if check.name == name), None)
 
 
-def log_readiness_report(report: ReadinessReport) -> None:
-    """Emit one log line per failed check; summarize when all checks pass.
+    def log(self) -> None:
+        """Log the readiness report."""
 
-    Args:
-        report: A report on the readiness of the database.
-    """
+        for check in self.checks:
+            if check.ok:
+                logger.debug(
+                    "Readiness check passed: %s",
+                    check.name,
+                    extra={"details": check.details},
+                )
+                continue
 
-    for check in report.checks:
-        if check.ok:
-            logger.debug(
-                "Readiness check passed: %s",
+            logger.warning(
+                "Readiness check failed: %s — %s",
                 check.name,
+                check.message,
                 extra={"details": check.details},
             )
-            continue
 
-        logger.warning(
-            "Readiness check failed: %s — %s",
-            check.name,
-            check.message,
-            extra={"details": check.details},
-        )
-
-    if report.ok:
-        logger.info("Database readiness checks passed.")
+        if self.ok:
+            logger.info("Database readiness checks passed.")
 
 
 async def _check_table(
@@ -240,7 +236,7 @@ async def main() -> None:
         report = await is_ready(
             session_factory, schema=schema, table=table, min_rows=min_rows
         )
-        log_readiness_report(report)
+        report.log()
     finally:
         if engine:
             await close_async_engine(engine)

@@ -3,8 +3,7 @@ from .bootstrap import bootstrap_schema, create_indexes, enable_extensions, init
 from .readiness import (
     CheckResult,
     ReadinessReport,
-    is_ready,
-    log_readiness_report,
+    is_ready
 )
 
 __all__ = [
@@ -18,6 +17,5 @@ __all__ = [
     "create_indexes",
     "CheckResult",
     "ReadinessReport",
-    "is_ready",
-    "log_readiness_report",
+    "is_ready"
 ]

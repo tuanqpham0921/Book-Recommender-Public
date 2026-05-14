@@ -1,5 +1,12 @@
 from .settings import settings
-from .constants import AppConfig, BookConstraints, BookGuides, IngestionConstants, DatabaseConstants
+from .constants import (
+    AppConfig,
+    BookConstraints,
+    BookGuides,
+    DatabaseConstants,
+    FilesLocationConstants,
+    IngestionConstants,
+)
 from .logging_config import get_logger, setup_logging
 
 
@@ -12,4 +19,5 @@ __all__ = [
     "get_logger",
     "IngestionConstants",
     "DatabaseConstants",
+    "FilesLocationConstants",
 ]

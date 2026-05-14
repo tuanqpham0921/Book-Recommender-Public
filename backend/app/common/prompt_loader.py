@@ -1,11 +1,8 @@
-"""
-Prompt loading utilities for managing external prompt templates.
-"""
-
-import os
+import logging
 from pathlib import Path
 from typing import Dict, Optional
-import logging
+
+from config import FilesLocationConstants
 
 logger = logging.getLogger(__name__)
 
@@ -14,12 +11,9 @@ class PromptLoader:
 
     def __init__(self, prompts_dir: Optional[Path] = None):
         """Initialize with prompts directory."""
-        if prompts_dir is None:
-            # Default to prompts directory relative to app root
-            current_dir = Path(__file__).parent.parent  # Go up to app/
-            prompts_dir = current_dir / "prompts"
-
-        self.prompts_dir = Path(prompts_dir)
+        self.prompts_dir = Path(
+            prompts_dir or FilesLocationConstants.PROMPTS_DIR
+        )
         self._cache: Dict[str, str] = {}
 
     def load_prompt(self, prompt_path: str, use_cache: bool = True) -> str:

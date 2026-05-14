@@ -1,12 +1,16 @@
-import os
 import json
 import logging
+from pathlib import Path
 
-from config import settings
+from config import FilesLocationConstants
 
 logger = logging.getLogger(__name__)
 
-def save_file(data, file_name: str = "log", path: str = settings.app.EXPORT_DIR):
+def save_file(
+    data,
+    file_name: str = "log",
+    path: Path | str = FilesLocationConstants.EXPORT_DIR,
+):
     """JSON logging utility for debugging and exports.
 
     Args:
@@ -15,11 +19,11 @@ def save_file(data, file_name: str = "log", path: str = settings.app.EXPORT_DIR)
         path: Directory path for the log file
     """
     
-    # Ensure directory exists
-    os.makedirs(path, exist_ok=True)
+    path = Path(path)
+    path.mkdir(parents=True, exist_ok=True)
 
     json_str = json.dumps(data, indent=2, default=str)
-    filepath = f"{path}{file_name}.json"
+    filepath = path / f"{file_name}.json"
 
     with open(filepath, "w") as f:
         f.write(json_str)

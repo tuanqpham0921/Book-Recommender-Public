@@ -7,9 +7,9 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from db.schema.extensions import REQUIRED_EXTENSIONS
 
-logger = logging.getLogger(__name__)
+from config.constants import FilesLocationConstants
 
-SCHEMA_DIR = Path(__file__).resolve().parent / "schema"
+logger = logging.getLogger(__name__)
 
 
 def _sql_statements(sql: str) -> list[str]:
@@ -35,7 +35,9 @@ async def _execute_sql_file(session: AsyncSession, path: Path) -> None:
 async def enable_extensions(session_factory: async_sessionmaker[AsyncSession]) -> None:
     """Install required PostgreSQL extensions."""
     async with session_factory() as session:
-        await _execute_sql_file(session, SCHEMA_DIR / "00_extensions.sql")
+        await _execute_sql_file(
+            session, FilesLocationConstants.SCHEMA_EXTENSIONS_FILE
+        )
         await session.commit()
     logger.info("Installed PostgreSQL extensions: %s", ", ".join(REQUIRED_EXTENSIONS))
 
@@ -43,7 +45,7 @@ async def enable_extensions(session_factory: async_sessionmaker[AsyncSession]) -
 async def init_tables(session_factory: async_sessionmaker[AsyncSession]) -> None:
     """Create application tables from schema SQL."""
     async with session_factory() as session:
-        await _execute_sql_file(session, SCHEMA_DIR / "01_tables.sql")
+        await _execute_sql_file(session, FilesLocationConstants.SCHEMA_TABLES_FILE)
         await session.commit()
     logger.info("Ensured books table exists.")
 
@@ -51,7 +53,7 @@ async def init_tables(session_factory: async_sessionmaker[AsyncSession]) -> None
 async def create_indexes(session_factory: async_sessionmaker[AsyncSession]) -> None:
     """Create database indexes from schema SQL."""
     async with session_factory() as session:
-        await _execute_sql_file(session, SCHEMA_DIR / "02_indexes.sql")
+        await _execute_sql_file(session, FilesLocationConstants.SCHEMA_INDEXES_FILE)
         await session.commit()
     logger.info("Ensured books indexes exist.")
 

@@ -1,3 +1,9 @@
+from pathlib import Path
+""" Centralized constants for the application.
+Makefile and docker compose will need to update (manually) if these are changed.
+"""
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 class AppConfig:
     """System-level constants."""
@@ -5,13 +11,30 @@ class AppConfig:
     DATABASE_TIMEOUT = 10.0  # SQLAlchemy engine init / connectivity
     OPENAI_TIMEOUT   = 10.0
     DEFAULT_TIMEOUT  = 10.0
+    
 
 class DatabaseConstants:
     """Database constants."""
     SCHEMA = "public"
 
+class FilesLocationConstants:
+    """Repository paths resolved from the backend package root."""
+
+    PROJECT_ROOT = PROJECT_ROOT
+    DATA_DIR = PROJECT_ROOT / "data"
+    CSV_FILE = "books.csv"
+    
+    EXAMPLE_PROMPT_DIR = DATA_DIR / "prompt_example"
+    PROMPTS_DIR = PROJECT_ROOT / "app" / "prompts"
+    EXPORT_DIR = PROJECT_ROOT / "logs"
+    BACKUP_DIR = DATA_DIR / "backup"
+    SCHEMA_DIR = PROJECT_ROOT / "db" / "schema"
+    SCHEMA_EXTENSIONS_FILE = SCHEMA_DIR / "00_extensions.sql"
+    SCHEMA_TABLES_FILE = SCHEMA_DIR / "01_tables.sql"
+    SCHEMA_INDEXES_FILE = SCHEMA_DIR / "02_indexes.sql"
 
 class BookGuides:
+    """Book guides constants."""
     CLASSICAL_YEAR    = "before 1900"
     EARLY_MODERN_YEAR = "between 1900 and 1950"
     HISTORICAL_YEAR   = "between 1950 and 2000"
@@ -78,7 +101,6 @@ class BookConstraints:
 # things that are where they are right now are mostly for testing and development
 class IngestionConstants:
     """Constants for ingestion."""
-    CSV_FILE = "books.csv"
     APPROXIMATE_LOAD_LIMIT = 5000
     BATCH_SIZE = 10
     TESTING_LIMIT = 100

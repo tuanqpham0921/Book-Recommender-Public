@@ -1,11 +1,12 @@
-import os
 import asyncio
 import time
+from pathlib import Path
+
 import pandas as pd
 
 from db.schema import BookModel
 from clients.openai_client import OpenAIClient
-from config import settings, IngestionConstants, DatabaseConstants
+from config import DatabaseConstants, FilesLocationConstants, IngestionConstants, settings
 
 from db import (
     bootstrap_schema,
@@ -21,20 +22,22 @@ def batchify(iterable, batch_size):
     for i in range(0, len(iterable), batch_size):
         yield iterable[i : i + batch_size]
 
-def load_books_from_csv(path: str = settings.app.DATA_DIR, 
-                        csv_file: str = IngestionConstants.CSV_FILE,
-                        limit: int = None):
+def load_books_from_csv(
+    path: Path | str = FilesLocationConstants.DATA_DIR,
+    csv_file: str = FilesLocationConstants.CSV_FILE,
+    limit: int = None,
+):
     """Load books from CSV.
 
     ``limit`` caps how many **CSV rows** are read (via ``head``), not how many
     valid books you end up with—rows missing title/description are skipped, so
     the book list can be smaller than ``limit``.
     """
-    path = os.path.join(path, csv_file)
-    if not os.path.exists(path):
-        raise FileNotFoundError(f"File {path} does not exist")
+    csv_path = Path(path) / csv_file
+    if not csv_path.exists():
+        raise FileNotFoundError(f"File {csv_path} does not exist")
 
-    df = pd.read_csv(path)
+    df = pd.read_csv(csv_path)
     if limit is not None:
         df = df.head(limit)
         print(

@@ -1,19 +1,19 @@
-import os
 import json
 import logging
+from pathlib import Path
 
-from config import settings
+from config import FilesLocationConstants
 
 logger = logging.getLogger(__name__)
 
 
 def _load_prompt_examples(
-    file: str, path: str = settings.app.EXAMPLE_PROMPT_DIR
+    file: str, path: Path = FilesLocationConstants.EXAMPLE_PROMPT_DIR
 ) -> dict:
     """Load JSON examples for strategies nodes."""
     result = []
-    json_path = os.path.join(path, file + ".json")
-    if file and os.path.exists(json_path):
+    json_path = path / f"{file}.json"
+    if file and json_path.exists():
         with open(json_path, "r") as f:
             result = json.load(f)
 

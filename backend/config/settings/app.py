@@ -6,10 +6,6 @@ class AppSettings(BaseSettings):
     NAME: str
     ENVIRONMENT: str
     ALLOW_ORIGINS: str
-    EXPORT_DIR: str
-    DATA_DIR: str
-    EXAMPLE_PROMPT_DIR: str
-    PROMPTS_DIR: str
 
     model_config = SettingsConfigDict(
         env_file="config/.env",

@@ -5,8 +5,7 @@ import pandas as pd
 
 from db.schema import BookModel
 from clients.openai_client import OpenAIClient
-from config import settings
-from config.bootstrap import IngestionConstants
+from config import settings, IngestionConstants, DatabaseConstants
 
 from db import (
     bootstrap_schema,
@@ -15,7 +14,6 @@ from db import (
     get_session_factory,
     is_ready,
 )
-from config.bootstrap import DatabaseConstants
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 def batchify(iterable, batch_size):

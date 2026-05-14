@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "book-recommender"
+name = "book-rec"
 version = "1.0.0"
 description = ""
 authors = ["Tuan Pham <tuanqpham0921@gmail.com>"]
@@ -8,8 +8,7 @@ packages = [
     { include = "common" },
     { include = "db" },
     { include = "config" },
-    { include = "data" },
-    { include = "ingestion" },
+    { include = "ingestion" }
 ]
 
 [tool.poetry.dependencies]

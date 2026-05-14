@@ -1,6 +1,7 @@
 -- Books table (embedding width must match OPENAI_EMBEDDING_DIMENSIONS / init docs).
 CREATE TABLE IF NOT EXISTS books (
     isbn13 TEXT PRIMARY KEY,
+    isbn10 TEXT,
     title TEXT NOT NULL,
     authors TEXT,
     categories TEXT,
@@ -11,15 +12,7 @@ CREATE TABLE IF NOT EXISTS books (
     num_pages INTEGER,
     ratings_count INTEGER,
     thumbnail TEXT,
-    large_thumbnail TEXT,
     title_and_subtiles TEXT,
-    anger DOUBLE PRECISION DEFAULT 0.0,
-    disgust DOUBLE PRECISION DEFAULT 0.0,
-    fear DOUBLE PRECISION DEFAULT 0.0,
-    joy DOUBLE PRECISION DEFAULT 0.0,
-    sadness DOUBLE PRECISION DEFAULT 0.0,
-    surprise DOUBLE PRECISION DEFAULT 0.0,
-    neutral DOUBLE PRECISION DEFAULT 0.0,
     is_children BOOLEAN DEFAULT FALSE,
     embedding VECTOR(1024)
 );

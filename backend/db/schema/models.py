@@ -15,7 +15,7 @@ class BookModel(Base):
 
     # Book identifiers
     isbn13 = Column(String(13), primary_key=True, index=True)
-    # isbn10 = Column(String(10), nullable=True, index=True)
+    isbn10 = Column(String(10), nullable=True, index=True)
 
     # Basic book information
     title = Column(String(500), nullable=False, index=True)

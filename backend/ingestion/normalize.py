@@ -13,38 +13,47 @@ def clean_numeric_value(value):
     except (ValueError, TypeError):
         return None
     
+def apply_normalization(row: pd.Series) -> dict:
+    book_dict = {
+        "isbn13": str(row.get("isbn13")),
+        "isbn10": str(row.get("isbn10")),
+        "title": str(row["title"]),
+        "authors": str(row.get("authors", "")),
+        "categories": str(row.get("categories", "")),
+        "genre": str(row.get("simple_categories", "")),
+        "description": str(row["tagged_description"]),
+        "published_year": (
+            int(clean_numeric_value(row.get("published_year")))
+            if clean_numeric_value(row.get("published_year"))
+            else None
+        ),
+        "average_rating": clean_numeric_value(row.get("average_rating")),
+        "num_pages": (
+            int(clean_numeric_value(row.get("num_pages")))
+            if clean_numeric_value(row.get("num_pages"))
+            else None
+        ),
+        "ratings_count": (
+            int(clean_numeric_value(row.get("ratings_count")))
+            if clean_numeric_value(row.get("ratings_count"))
+            else None
+        ),
+        "thumbnail": str(row.get("thumbnail", "")),
+        "title_and_subtiles": str(row.get("title_and_subtiles", "")),
+    }
+    return book_dict
+    
 def prepare_chunk(chunk: pd.DataFrame) -> list[BookModel]:
     """Prepare books for embedding and storage."""
     cleaned_chunk = []
 
     for idx, row in chunk.iterrows():
         if pd.notna(row["title"]) and pd.notna(row["description"]):
-            cleaned_chunk.append({
-                "isbn13": str(row.get("isbn13")),
-                "title": str(row["title"]),
-                "authors": str(row.get("authors", "")),
-                "categories": str(row.get("categories", "")),
-                "genre": str(row.get("simple_categories", "")),
-                "description": str(row["tagged_description"]),
-                "published_year": (
-                    int(clean_numeric_value(row.get("published_year")))
-                    if clean_numeric_value(row.get("published_year"))
-                    else None
-                ),
-                "average_rating": clean_numeric_value(row.get("average_rating")),
-                "num_pages": (
-                    int(clean_numeric_value(row.get("num_pages")))
-                    if clean_numeric_value(row.get("num_pages"))
-                    else None
-                ),
-                "ratings_count": (
-                    int(clean_numeric_value(row.get("ratings_count")))
-                    if clean_numeric_value(row.get("ratings_count"))
-                    else None
-                ),
-                "thumbnail": str(row.get("thumbnail", "")),
-                "title_and_subtiles": str(row.get("title_and_subtiles", "")),
-            })
+            try:
+                book_dict = apply_normalization(row)
+                cleaned_chunk.append(book_dict)
+            except Exception as e:
+                raise ValueError(f"Error preparing chunk: {e}")
 
     return cleaned_chunk
 

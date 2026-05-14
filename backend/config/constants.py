@@ -11,7 +11,8 @@ class AppConfig:
     DATABASE_TIMEOUT = 10.0  # SQLAlchemy engine init / connectivity
     OPENAI_TIMEOUT   = 10.0
     DEFAULT_TIMEOUT  = 10.0
-    
+
+
 
 class DatabaseConstants:
     """Database constants."""
@@ -23,6 +24,8 @@ class FilesLocationConstants:
     PROJECT_ROOT = PROJECT_ROOT
     DATA_DIR = PROJECT_ROOT / "data"
     CSV_FILE = "books.csv"
+    
+    ENV_FILE = PROJECT_ROOT / "config" / ".env"
     
     EXAMPLE_PROMPT_DIR = DATA_DIR / "prompt_example"
     PROMPTS_DIR = PROJECT_ROOT / "app" / "prompts"

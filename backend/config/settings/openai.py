@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
+from config.constants import FilesLocationConstants
 
 class OpenAISettings(BaseSettings):
     API_KEY: str
@@ -10,7 +10,7 @@ class OpenAISettings(BaseSettings):
     EMBEDDING_DIMENSIONS: int
 
     model_config = SettingsConfigDict(
-        env_file="config/.env",
+        env_file=FilesLocationConstants.ENV_FILE,
         env_prefix="OPENAI_",
         env_file_encoding="utf-8",
         extra="ignore",

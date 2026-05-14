@@ -113,14 +113,9 @@ async def load_books():
         if ready_report.ok:
             print(f"Database already has enough rows; skipping ingestion for schema: {schema} and table: {table}")
             return
-        else:
-            # This should only failed if there's not enough rows in the table
-            # But in the future, as we have more extensions, we might need to add more checks
-            # can be in report function
-            for check in ready_report.checks:
-                if not check.ok:
-                    print(f"Failed check: {check.name}, error: {check.message}")
-            
+
+        ready_report.log()
+
         # Load books from CSV
         print("Loading Books from CSV")
         books_df = load_books_from_csv()

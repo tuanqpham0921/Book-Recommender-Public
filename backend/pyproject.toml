@@ -5,6 +5,7 @@ description = ""
 authors = ["Tuan Pham <tuanqpham0921@gmail.com>"]
 packages = [
     { include = "app" },
+    { include = "common" },
     { include = "db" },
     { include = "config" },
     { include = "data" },

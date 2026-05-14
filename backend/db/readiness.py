@@ -1,63 +1,27 @@
 import asyncio
 import logging
-from dataclasses import dataclass, field
-from typing import Any
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from common import OperationReport, OperationResult
+from db.async_engine import check_connection
 from db.schema.extensions import REQUIRED_EXTENSIONS
 
 logger = logging.getLogger(__name__)
 
-from db.async_engine import check_connection
+CheckResult = OperationResult
 
 
-@dataclass(frozen=True, slots=True)
-class CheckResult:
-    """Result of a single readiness check."""
+class ReadinessReport(OperationReport):
+    """Database readiness report with domain-specific logging."""
 
-    name: str
-    ok: bool
-    message: str
-    details: dict[str, Any] = field(default_factory=dict)
-
-
-@dataclass(frozen=True, slots=True)
-class ReadinessReport:
-    """Report on the readiness of the database."""
-
-    checks: list[CheckResult] = field(default_factory=list)
-
-    @property
-    def ok(self) -> bool:
-        return all(check.ok for check in self.checks)
-
-    def get(self, name: str) -> CheckResult | None:
-        return next((check for check in self.checks if check.name == name), None)
-
-
-    def log(self) -> None:
-        """Log the readiness report."""
-
-        for check in self.checks:
-            if check.ok:
-                logger.debug(
-                    "Readiness check passed: %s",
-                    check.name,
-                    extra={"details": check.details},
-                )
-                continue
-
-            logger.warning(
-                "Readiness check failed: %s — %s",
-                check.name,
-                check.message,
-                extra={"details": check.details},
-            )
-
-        if self.ok:
-            logger.info("Database readiness checks passed.")
+    def log(self, logger: logging.Logger | None = None) -> None:
+        super().log(
+            logger or logging.getLogger(__name__),
+            success_summary="Database readiness checks passed.",
+            check_label="Readiness check",
+        )
 
 
 async def _check_table(
@@ -65,7 +29,7 @@ async def _check_table(
     *,
     schema: str,
     table: str,
-) -> CheckResult:
+) -> OperationResult:
     """Check if the table exists and the schema is correct.
 
     Args:
@@ -81,7 +45,7 @@ async def _check_table(
             {"fqtn": fqtn},
         )
         exists = bool(result.scalar())
-        return CheckResult(
+        return OperationResult(
             name="table",
             ok=exists,
             message=f"Table {fqtn} exists." if exists else f"Table {fqtn} not found.",
@@ -89,7 +53,7 @@ async def _check_table(
         )
     except Exception as exc:
         logger.exception("Table check failed for %s", fqtn)
-        return CheckResult(
+        return OperationResult(
             name="table",
             ok=False,
             message=f"Table check failed for {fqtn}.",
@@ -103,7 +67,7 @@ async def has_minimum_books(
     schema: str,
     table: str,
     min_rows: int,
-) -> CheckResult:
+) -> OperationResult:
     """Check if the table has at least the minimum number of rows.
 
     Args:
@@ -117,7 +81,7 @@ async def has_minimum_books(
         result = await session.execute(text(f"SELECT COUNT(*) FROM {schema}.{table}"))
         row_count = int(result.scalar() or 0)
         ok = row_count >= min_rows
-        return CheckResult(
+        return OperationResult(
             name="rows",
             ok=ok,
             message=(f"Table {fqtn} has {row_count} rows (need at least {min_rows})."),
@@ -125,7 +89,7 @@ async def has_minimum_books(
         )
     except Exception as exc:
         logger.exception("Row count check failed for %s", fqtn)
-        return CheckResult(
+        return OperationResult(
             name="rows",
             ok=False,
             message=f"Row count check failed for {fqtn}.",
@@ -133,7 +97,7 @@ async def has_minimum_books(
         )
 
 
-async def _check_table_extensions(session: AsyncSession) -> CheckResult:
+async def _check_table_extensions(session: AsyncSession) -> OperationResult:
     """Check if the required PostgreSQL extensions are installed.
 
     Args:
@@ -148,7 +112,7 @@ async def _check_table_extensions(session: AsyncSession) -> CheckResult:
         found = {row[0] for row in result.fetchall()}
         missing = [ext for ext in required_extensions if ext not in found]
         ok = not missing
-        return CheckResult(
+        return OperationResult(
             name="extensions",
             ok=ok,
             message=(
@@ -164,7 +128,7 @@ async def _check_table_extensions(session: AsyncSession) -> CheckResult:
         )
     except Exception as exc:
         logger.exception("Extension check failed")
-        return CheckResult(
+        return OperationResult(
             name="extensions",
             ok=False,
             message="Extension check failed.",
@@ -187,7 +151,7 @@ async def is_ready(
         table: The table to check.
         min_rows: The minimum number of rows the table should have.
     """
-    checks: list[CheckResult] = []
+    checks: list[OperationResult] = []
 
     async with session_factory() as session:
         # simple test connection (must be first and pass)
@@ -218,14 +182,15 @@ async def is_ready(
 # poetry run python db/readiness.py
 # -----------------------------------------------------------------------------
 async def main() -> None:
+    from config import DatabaseConstants, IngestionConstants
     from db.async_engine import (
         close_async_engine,
         get_async_engine,
         get_session_factory,
     )
-    from config.bootstrap import DatabaseConstants, IngestionConstants
     from db.schema import BookModel
 
+    engine = None
     try:
         engine = get_async_engine()
         schema = DatabaseConstants.SCHEMA

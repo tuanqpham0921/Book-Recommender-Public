@@ -54,9 +54,29 @@ postgres-restore:
 	docker exec -i -e PGPASSWORD=$$POSTGRES_PASSWORD $(POSTGRES_CONTAINER) \
 		psql -U $$POSTGRES_USER -d $$POSTGRES_DB < $(MAKEFILE_DIR)data/backup.sql
 
-# clean the docker containers
-docker-clean:
-	docker compose --env-file $(ENV_FILE) -f $(DOCKER_COMPOSE_FILE) down -v
+# dump the postgres data to a file (overwrites existing backup.sql)
+# currently throw an error because entry point init and backup does have IF NOT EXISTS
+postgres-dump:
+	set -a && . $(ENV_FILE) && set +a && \
+	docker exec -i -e PGPASSWORD=$$POSTGRES_PASSWORD $(POSTGRES_CONTAINER) \
+		pg_dump -U $$POSTGRES_USER -d $$POSTGRES_DB > $(MAKEFILE_DIR)data/backup.sql
+	@echo "PostgreSQL data dumped to $(MAKEFILE_DIR)data/backup.sql"
+
+# restore the postgres data from a file
+postgres-restore-data:
+	set -a && . $(ENV_FILE) && set +a && \
+	docker exec -i -e PGPASSWORD=$$POSTGRES_PASSWORD $(POSTGRES_CONTAINER) \
+		psql -U $$POSTGRES_USER -d $$POSTGRES_DB < $(MAKEFILE_DIR)data/backup.sql
+	@echo "PostgreSQL data restored from $(MAKEFILE_DIR)data/backup.sql"
 
 # -------------------
-.PHONY: dev ingestion postgres-start postgres-stop postgres-cli postgres-restore docker-clean clean
+# Docker commands
+# -------------------
+
+# clean the docker containers and volumes
+docker-clean-all:
+	docker compose --env-file $(ENV_FILE) -f $(DOCKER_COMPOSE_FILE) down -v
+	@echo "Docker containers and volumes cleaned"
+
+# -------------------
+.PHONY: dev ingestion postgres-start postgres-stop postgres-cli postgres-restore postgres-dump postgres-restore-data docker-clean-all clean

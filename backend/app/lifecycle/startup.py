@@ -1,13 +1,12 @@
 import asyncio
 import logging
 from fastapi import FastAPI
-from typing import Any
 
-from sqlalchemy.ext.asyncio import AsyncEngine
-from db import get_async_engine, get_session_factory, close_async_engine
+from db import get_async_engine, get_session_factory
 from config import AppConfig, settings
 from app.orchestration.orchestrator import Orchestrator
 from clients import OpenAIClient
+from sqlalchemy.ext.asyncio import AsyncEngine
 
 # TODO: there are redundant startup tasks for the same service, we should refactor this
 # and use a single startup task for all services.
@@ -39,9 +38,9 @@ def start_orchestrator() -> Orchestrator:
     """Start the orchestrator."""
     return Orchestrator()
 
-async def start_sqlalchemy_engine():
+async def start_sqlalchemy_engine() -> AsyncEngine:
     """Start the SQLAlchemy engine."""
-    return get_async_engine()
+    return get_async_engine(settings.sqlalchemy)
 
 # --- Main startup routine ---
 async def start_all(app: FastAPI):

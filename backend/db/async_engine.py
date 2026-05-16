@@ -1,23 +1,14 @@
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     AsyncEngine,
-    create_async_engine,
     async_sessionmaker,
+    create_async_engine
 )
 
-from config.settings import settings
+from config.settings import SQLAlchemySettings
 import logging
 
 logger = logging.getLogger(__name__)
-
-def _get_connect_args():
-    """Get the connection arguments for the SQLAlchemy engine."""
-    # In the future, we can add more connection arguments here.
-    return {
-        "server_settings": {
-            "application_name": settings.app.NAME,
-        }
-    }
     
 def get_session_factory(engine: AsyncEngine):
     """Get the session factory for the SQLAlchemy engine."""
@@ -29,21 +20,18 @@ def get_session_factory(engine: AsyncEngine):
     
     return session_factory
 
-def get_async_engine() -> AsyncEngine:
+def get_async_engine(sqlalchemy_settings: SQLAlchemySettings) -> AsyncEngine:
     """Build the async engine"""
-    connect_args = _get_connect_args()
 
     engine = create_async_engine(
-        settings.sqlalchemy.sqlalchemy_url,
+        sqlalchemy_settings.sqlalchemy_url,
         # Connection pool settings optimized for Cloud SQL
-        pool_size=settings.sqlalchemy.MIN_CONNECTIONS,
-        max_overflow=settings.sqlalchemy.MAX_CONNECTIONS
-        - settings.sqlalchemy.MIN_CONNECTIONS,
+        pool_size=sqlalchemy_settings.MIN_CONNECTIONS,
+        max_overflow=sqlalchemy_settings.MAX_CONNECTIONS- sqlalchemy_settings.MIN_CONNECTIONS,
         pool_pre_ping=True,  # Validate connections before use
         pool_recycle=1800,   # Recycle connections every 30 minutes (Cloud SQL friendly)
         pool_timeout=60,     # Wait up to 60 seconds for a connection
         # echo=settings.debug, # Log SQL queries in debug mode
-        connect_args=connect_args,
     )
     return engine
 

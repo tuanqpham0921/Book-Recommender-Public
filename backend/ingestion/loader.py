@@ -82,11 +82,10 @@ async def load_books():
     schema=DatabaseConstants.SCHEMA
     table=BookModel.__tablename__
     csv_path = Path(FilesLocationConstants.DATA_DIR) / FilesLocationConstants.CSV_FILE
-    
     print(f"Running ingestion for schema: {schema} and table: {table}")
     try:
         # Get database connection
-        async_engine = get_async_engine()
+        async_engine = get_async_engine(settings.sqlalchemy)
         session_factory = get_session_factory(async_engine)
         
         # bootstrap schema

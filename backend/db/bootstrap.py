@@ -71,9 +71,9 @@ async def bootstrap_schema(session_factory: async_sessionmaker[AsyncSession]) ->
 async def main() -> None:
     from config.bootstrap import setup_logging
     from db.async_engine import close_async_engine, get_async_engine, get_session_factory
-
+    from config.settings import sqlalchemy_settings
     setup_logging()
-    engine = get_async_engine()
+    engine = get_async_engine(sqlalchemy_settings)
     try:
         session_factory = get_session_factory(engine)
         await bootstrap_schema(session_factory)

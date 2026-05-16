@@ -3,6 +3,7 @@ import time
 from pathlib import Path
 
 import pandas as pd
+from tqdm import tqdm
 
 from db.schema import BookModel
 from clients.openai_client import OpenAIClient
@@ -22,6 +23,12 @@ from sqlalchemy.dialects.postgresql import insert
 
 def _embedding_text(book: dict) -> str:
     return f"{book['title']}\n\n{book['description']}"
+
+
+def _count_csv_data_rows(csv_path: Path) -> int:
+    """Count data rows in a CSV (excludes header). Used for tqdm totals."""
+    with csv_path.open("rb") as f:
+        return max(sum(1 for _ in f) - 1, 0)
 
 def iter_books_from_csv(csv_path: Path, *, chunksize: int = 10, limit: int | None = None):
     from ingestion.normalize import prepare_chunk
@@ -115,8 +122,12 @@ async def embed_missing_books(
     if not missing_books:
         return 0
 
-    print(f"Embedding {len(missing_books)} books...")
-    for book in missing_books:
+    for book in tqdm(
+        missing_books,
+        desc="Embedding books",
+        unit="book",
+        total=len(missing_books),
+    ):
         await update_book_embedding(book, openai_client, session_factory)
 
     print(f"✅ Embedded {len(missing_books)} books")
@@ -149,10 +160,16 @@ async def load_books():
         print("Storing Books into PostgreSQL")
         total_books_stored = 0
         total_books = 0
-        # Store books
-        for batch in iter_books_from_csv(csv_path):
-            total_books += len(batch)
-            total_books_stored += await store_books(batch, session_factory)
+        csv_row_count = _count_csv_data_rows(csv_path)
+        with tqdm(
+            desc="Storing books",
+            unit="book",
+            total=csv_row_count or None,
+        ) as store_pbar:
+            for batch in iter_books_from_csv(csv_path):
+                total_books += len(batch)
+                total_books_stored += await store_books(batch, session_factory)
+                store_pbar.update(len(batch))
         
         print(f"✅ Stored {total_books_stored} books out of {total_books}")
         print("Books stored successfully")

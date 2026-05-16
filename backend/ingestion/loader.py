@@ -16,17 +16,12 @@ from db import (
     is_ready,
 )
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
-from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy import select, update
 from sqlalchemy.dialects.postgresql import insert
 
-async def embed_batch(batch: list[dict], openai_client: OpenAIClient) -> list[dict]:
-    """Embed a batch of books using OpenAI."""
-    for book in batch:
-        book.embedding = await openai_client.get_embedding(
-            book.title + "\n\n" + book.description
-        )
 
-    return batch
+def _embedding_text(book: dict) -> str:
+    return f"{book['title']}\n\n{book['description']}"
 
 def iter_books_from_csv(csv_path: Path, *, chunksize: int = 10, limit: int | None = None):
     from ingestion.normalize import prepare_chunk
@@ -52,14 +47,16 @@ async def store_books(
     batch: list[dict],
     session_factory: async_sessionmaker[AsyncSession],
 ) -> int:
+    """Store a batch of books into the database."""
     if not batch:
         return 0
+    
     table = BookModel.__table__
     stmt = insert(table).values(batch)
     update_columns = {
         column.name: stmt.excluded[column.name]
         for column in table.columns
-        if column.name != "isbn13"
+        if column.name not in ("isbn13", "embedding")
     }
     stmt = stmt.on_conflict_do_update(
         index_elements=["isbn13"],
@@ -73,6 +70,57 @@ async def store_books(
     except Exception as e:
         print(f"❌ Error committing batch: {e}")
         return 0
+
+async def get_missing_books(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> list[dict]:
+    """Books that exist in the DB but have no embedding yet."""
+    stmt = (
+        select(
+            BookModel.isbn13,
+            BookModel.title,
+            BookModel.description,
+        )
+        .where(BookModel.embedding.is_(None))
+        .where(BookModel.description.is_not(None))
+    )
+    async with session_factory() as session:
+        result = await session.execute(stmt)
+        return [dict(row) for row in result.mappings()]
+
+
+async def update_book_embedding(
+    book: dict,
+    openai_client: OpenAIClient,
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    """Compute an embedding and persist only the embedding column."""
+    embedding = await openai_client.get_embedding(_embedding_text(book))
+    stmt = (
+        update(BookModel)
+        .where(BookModel.isbn13 == book["isbn13"])
+        .values(embedding=embedding)
+    )
+    async with session_factory() as session:
+        await session.execute(stmt)
+        await session.commit()
+
+
+async def embed_missing_books(
+    session_factory: async_sessionmaker[AsyncSession],
+    openai_client: OpenAIClient,
+) -> int:
+    """Backfill embeddings for rows where embedding IS NULL."""
+    missing_books = await get_missing_books(session_factory)
+    if not missing_books:
+        return 0
+
+    print(f"Embedding {len(missing_books)} books...")
+    for book in missing_books:
+        await update_book_embedding(book, openai_client, session_factory)
+
+    print(f"✅ Embedded {len(missing_books)} books")
+    return len(missing_books)
 
 
 async def load_books():
@@ -108,7 +156,13 @@ async def load_books():
         
         print(f"✅ Stored {total_books_stored} books out of {total_books}")
         print("Books stored successfully")
-        
+
+        if not settings.openai.API_KEY:
+            raise ValueError("OpenAI API key not set; required for embedding backfill")
+
+        openai_client = OpenAIClient(api_key=settings.openai.API_KEY)
+        await embed_missing_books(session_factory, openai_client)
+
     except Exception as e:
         raise ValueError(f"Error ingesting books: {e}")
     finally:

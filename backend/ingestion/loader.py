@@ -156,6 +156,11 @@ async def load_books():
                                       table=table, 
                                       min_rows=IngestionConstants.APPROXIMATE_LOAD_LIMIT)
         ready_report.log()
+        # TODO: check the embedding status and only embed if it's not done
+        # (current removed for testing)
+        # if ready_report.ok:
+        #     print("Database is ready")
+        #     return
         
         print("Storing Books into PostgreSQL")
         total_books_stored = 0

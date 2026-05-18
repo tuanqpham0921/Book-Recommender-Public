@@ -189,11 +189,11 @@ async def main() -> None:
         get_session_factory,
     )
     from db.schema import BookModel
-    from config.settings import sqlalchemy_settings
+    from config import settings
 
     engine = None
     try:
-        engine = get_async_engine(sqlalchemy_settings)
+        engine = get_async_engine(settings.sqlalchemy)
         schema = DatabaseConstants.SCHEMA
         table = BookModel.__tablename__
         min_rows = IngestionConstants.APPROXIMATE_LOAD_LIMIT

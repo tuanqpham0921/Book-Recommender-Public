@@ -179,10 +179,7 @@ async def load_books():
         print(f"✅ Stored {total_books_stored} books out of {total_books}")
         print("Books stored successfully")
 
-        if not settings.openai.API_KEY:
-            raise ValueError("OpenAI API key not set; required for embedding backfill")
-
-        openai_client = OpenAIClient(api_key=settings.openai.API_KEY)
+        openai_client = OpenAIClient(settings.openai)
         await embed_missing_books(session_factory, openai_client)
 
     except Exception as e:

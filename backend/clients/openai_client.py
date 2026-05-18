@@ -7,7 +7,7 @@ from typing import List, Optional
 from .schemas import OpenAIRequest
 from .base import BaseLLMClient
 
-from config import settings
+from config.settings import OpenAISettings
 from app.common.messages import AssistantMessage, SystemMessage, UserMessage
 from app.common.sse_stream import SSEStream
 from app.common.utils import print_json
@@ -16,18 +16,28 @@ logger = logging.getLogger(__name__)
 
 
 class OpenAIClient(BaseLLMClient):
-    def __init__(
-        self,
-        api_key: str,
-    ):
-        self.client = AsyncOpenAI(api_key=api_key)
+    def __init__(self, openai_settings: OpenAISettings):
+        """Initialize the OpenAIClient."""
+        if not openai_settings.API_KEY:
+            raise ValueError("OpenAI API key not set")
+        
+        self.client               = AsyncOpenAI(api_key=openai_settings.API_KEY)
+        self.embedding_model      = openai_settings.EMBEDDING_MODEL
+        self.embedding_dimensions = openai_settings.EMBEDDING_DIMENSIONS
     
-    async def get_embedding(self, 
-                            input, 
-                            model=settings.openai.EMBEDDING_MODEL, 
-                            dimensions=settings.openai.EMBEDDING_DIMENSIONS):
-        res = await self.client.embeddings.create(input=input, model=model, dimensions=dimensions)
-        return res.data[0].embedding
+    async def get_embedding(self, input: str) -> List[float]:
+        """Get the embedding for the input text."""
+        try:
+            response = await self.client.embeddings.create(
+                                input=input, 
+                                model=self.embedding_model, 
+                                dimensions=self.embedding_dimensions
+                            )
+            return response.data[0].embedding
+        
+        except Exception as e:
+            logger.error(f"❌❌❌ OpenAI embedding API call failed: {e}")
+            raise e
 
     async def estimate_tokens(self, payload) -> int:
         pass

@@ -29,9 +29,7 @@ async def _startup_task(name: str, coro, timeout: int):
 
 async def start_openai_client() -> OpenAIClient:
     """Start the OpenAI client."""
-    if not settings.openai.API_KEY:
-        raise ValueError("OpenAI API key not set")
-    return OpenAIClient(api_key=settings.openai.API_KEY)
+    return OpenAIClient(settings.openai)
 
 
 def start_orchestrator() -> Orchestrator:

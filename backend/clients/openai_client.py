@@ -8,12 +8,10 @@ from .schemas import OpenAIRequest
 from .base import BaseLLMClient
 
 from config.settings import OpenAISettings
-from app.common.messages import AssistantMessage, SystemMessage, UserMessage
+from app.common.messages import AssistantMessage
 from app.common.sse_stream import SSEStream
-from app.common.utils import print_json
 
 logger = logging.getLogger(__name__)
-
 
 class OpenAIClient(BaseLLMClient):
     def __init__(self, openai_settings: OpenAISettings):
@@ -39,11 +37,8 @@ class OpenAIClient(BaseLLMClient):
             logger.error(f"❌❌❌ OpenAI embedding API call failed: {e}")
             raise e
 
-    async def estimate_tokens(self, payload) -> int:
-        pass
-
     async def execute(self, req: OpenAIRequest) -> AssistantMessage:
-        # --- Preflight ---
+        """Execute the chat completion."""
         try:
             payload = req.to_payload()
 
@@ -67,6 +62,7 @@ class OpenAIClient(BaseLLMClient):
             raise e
 
     async def _chat_stream(self, payload: dict, sse_stream: Optional[SSEStream]):
+        """Stream the chat completion."""
         async with self.client.beta.chat.completions.stream(**payload) as stream:
             async for event in stream:
                 if event.type == "content.delta" and sse_stream:
@@ -79,25 +75,5 @@ class OpenAIClient(BaseLLMClient):
         return final_completion
 
     async def close(self):
+        """Close the OpenAIClient."""
         await self.client._client.aclose()
-
-    async def _smoke_api_call(self, sse_stream: SSEStream):
-        """Simple test call to verify LLM API connectivity."""
-        # for seing if it's taking a long time
-        await sse_stream.send_ui_loading("Smoke screening openAI...")
-
-        system_message = SystemMessage(
-            content="Tell me if you are here! Answer with a single word: yes or no."
-        )
-        chat_messages = UserMessage(content="Hello are you there?")
-        req = OpenAIRequest(
-            system=system_message,
-            messages=[chat_messages],
-            temperature=0.0,
-            top_p=1.0,
-            max_tokens=50,
-            sse_stream=sse_stream,
-        )
-        
-        response = await self.execute(req)
-        return response.content.strip().lower() == "yes"

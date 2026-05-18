@@ -35,11 +35,6 @@ class BaseLLMClient(ABC):
         ...
 
     @abstractmethod
-    async def estimate_tokens(self, req: BaseLLMRequest) -> int:
-        """Rough token estimate for trimming."""
-        ...
-
-    @abstractmethod
     async def close(self):
         """Close any resources used by the client."""
         ...

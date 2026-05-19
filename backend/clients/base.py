@@ -29,6 +29,8 @@ class BaseLLMRequest(BaseModel, ABC):
 class BaseLLMClient(ABC):
     """Abstract base interface for all LLM providers."""
 
+    max_tokens: int = 100_000
+
     @abstractmethod
     async def execute(self, req: BaseLLMRequest):
         """Execute a request (stream or not) and return an AssistantMessage."""
@@ -38,3 +40,12 @@ class BaseLLMClient(ABC):
     async def close(self):
         """Close any resources used by the client."""
         ...
+        
+    def token_count(self, text: str) -> int:
+        """Count the number of tokens in the text."""
+        import tiktoken
+        encoding = tiktoken.encoding_for_model(self.embedding_model)
+        return len(encoding.encode(text))
+    
+    def over_max_tokens(self, token_count: int) -> bool:
+        return token_count > self.max_tokens

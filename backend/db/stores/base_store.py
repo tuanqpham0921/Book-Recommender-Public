@@ -26,22 +26,17 @@ class BaseStore(Generic[T], ABC):
     
     async def get_by_id(self, id: Any) -> Optional[T]:
         """Get entity by primary key."""
-        return await self.session.get(self.model, id)
+        return await self._execute_statement(select(self.model).where(self.model.id == id))
     
     async def get_all(self, limit: int = 100) -> List[T]:
         """Get all entities with limit."""
         stmt = select(self.model).limit(limit)
-        result = await self.session.execute(stmt)
+        result = await self._execute_statement(stmt)
         return result.scalars().all()
     
     async def count(self) -> int:
         """Count total entities."""
         from sqlalchemy import func
         stmt = select(func.count(self.model.id))
-        result = await self.session.execute(stmt)
+        result = await self._execute_statement(stmt)
         return result.scalar()
-    
-    @abstractmethod
-    def row_to_dict(self, row: T) -> Dict[str, Any]:
-        """Convert model instance to dictionary."""
-        pass

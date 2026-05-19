@@ -7,7 +7,7 @@ from ingestion.normalize import prepare_chunk
 
 
 def count_csv_data_rows(csv_path: Path) -> int:
-    """Count data rows in a CSV (excludes header). Used for tqdm totals."""
+    """Count data rows in a CSV (excludes header)"""
     with csv_path.open("rb") as f:
         return max(sum(1 for _ in f) - 1, 0)
 

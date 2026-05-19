@@ -1,7 +1,6 @@
 """Persist normalized book rows to PostgreSQL."""
 from pathlib import Path
 
-from tqdm import tqdm
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy import select
@@ -46,15 +45,13 @@ async def store_books(
     total_books_stored = 0
     total_books = 0
     csv_row_count = count_csv_data_rows(csv_path)
-    with tqdm(
-        desc="Storing books",
-        unit="book",
-        total=csv_row_count or None,
-    ) as store_pbar:
-        for batch in iter_books_from_csv(csv_path):
-            total_books += len(batch)
-            total_books_stored += await insert_batch(batch, session_factory)
-            store_pbar.update(len(batch))
-
-    print(f"✅ Stored {total_books_stored} books out of {total_books}")
+    print(f"🔍 Storing {csv_row_count} books")
+    for batch in iter_books_from_csv(csv_path):
+        total_books += len(batch)
+        total_books_stored += await insert_batch(batch, session_factory)
+        print(f"✅ Stored {total_books_stored} books")
+        
+    if total_books_stored != total_books:
+        raise ValueError(f"❌ Expected to store {total_books} books, but only stored {total_books_stored} books")
+    
     return total_books_stored

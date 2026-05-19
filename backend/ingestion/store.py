@@ -8,27 +8,6 @@ from sqlalchemy import select
 from db.schema import BookModel
 from ingestion.csv_source import count_csv_data_rows, iter_books_from_csv
 
-async def iter_missing_books(
-    session_factory: async_sessionmaker[AsyncSession],
-    *,
-    batch_size: int = 500,
-):
-    """Iterate over books that are missing embeddings."""
-    stmt = (
-        select(
-            BookModel.isbn13,
-            BookModel.title,
-            BookModel.description,
-        )
-        .where(BookModel.embedding.is_(None))
-        .where(BookModel.description.is_not(None))
-        .execution_options(yield_per=batch_size)  # DB/driver fetches in chunks
-    )
-    async with session_factory() as session:
-        result = await session.stream(stmt)
-        async for row in result.mappings():
-            yield dict(row)
-
 
 async def insert_batch(
     batch: list[dict],

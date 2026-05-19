@@ -22,7 +22,7 @@ class OpenAIClient(BaseLLMClient):
         self.client               = AsyncOpenAI(api_key=openai_settings.API_KEY)
         self.embedding_model      = openai_settings.EMBEDDING_MODEL
         self.embedding_dimensions = openai_settings.EMBEDDING_DIMENSIONS
-    
+        
     async def get_embedding(self, input: str) -> List[float]:
         """Get the embedding for the input text."""
         try:
@@ -33,6 +33,20 @@ class OpenAIClient(BaseLLMClient):
                             )
             return response.data[0].embedding
         
+        except Exception as e:
+            logger.error(f"❌❌❌ OpenAI embedding API call failed: {e}")
+            raise e
+        
+    async def get_embeddings_batch(self, input: List[str]) -> List[float]:
+        """Get the embeddings for the input texts."""
+        try:
+            response = await self.client.embeddings.create(
+                                input=input, 
+                                model=self.embedding_model, 
+                                dimensions=self.embedding_dimensions
+                            )
+            response_data = sorted(response.data, key=lambda x: x.index)
+            return [data.embedding for data in response_data]
         except Exception as e:
             logger.error(f"❌❌❌ OpenAI embedding API call failed: {e}")
             raise e

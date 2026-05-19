@@ -12,6 +12,8 @@ from .utils import (
     compile_sql
 )
 
+from sqlalchemy import select, func
+
 class BookStore(BaseStore[BookModel]):
     """SQLAlchemy-based book data access layer."""
 
@@ -118,6 +120,25 @@ class BookStore(BaseStore[BookModel]):
             books_with_scores.append(book_dict)
         
         return books_with_scores
+    
+    async def get_missing_embeddings(self) -> List[Dict[str, Any]]:
+        """Get books that are missing embeddings."""
+        
+        stmt = select(
+            BookModel.isbn13,
+            BookModel.title,
+            BookModel.description,
+        ).where(BookModel.embedding.is_(None))
+        
+        result = await self._execute_statement(stmt)
+        rows = result.all()
+        return [dict(row._asdict()) for row in rows]
+    
+    async def get_num_book_missing_embeddings(self) -> int:
+        """Get the number of books that are missing embeddings."""
+        stmt = select(func.count()).select_from(BookModel).where(BookModel.embedding.is_(None))
+        result = await self.session.execute(stmt)
+        return result.scalar()
 
     def row_to_dict(self, row: BookModel) -> Dict[str, Any]:
         """Convert BookModel to standardized dictionary."""

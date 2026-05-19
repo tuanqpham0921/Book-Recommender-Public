@@ -1,7 +1,5 @@
 """Backfill description embeddings for books missing vectors."""
-from typing import List
-from tqdm import tqdm
-from sqlalchemy import func, select, update, insert
+from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from clients.openai_client import OpenAIClient
@@ -38,21 +36,23 @@ async def embed_missing_books(
             print("No books missing embeddings")
             return 0
         
+        print(f"🔍 Embedding {num_missing} books")
         batch_isbn13 = []
         batch_text = []
-        books = await book_store.get_missing_embeddings()
         count = 0
         token_count = 0
-        for book in books:
+        
+        async for book in book_store.iter_missing_embeddings():
             text = embedding_text(book)
             
             if openai_client.over_max_tokens(token_count + openai_client.token_count(text)):
                 embeddings = await openai_client.get_embeddings_batch(batch_text)
-                for i, embedding in enumerate(embeddings):
-                    await update_book_embedding(batch_isbn13[i], embedding, session)
-                
-                await session.commit()
-                
+                async with session_factory() as session_write:
+                    book_store = BookStore(session_write)
+                    for i, embedding in enumerate(embeddings):
+                        await update_book_embedding(batch_isbn13[i], embedding, session_write)
+                    await session_write.commit()
+                    
                 count += len(batch_isbn13)
                 print(f"✅ BATCH: Embedded {len(batch_isbn13)} books")
                 
@@ -74,5 +74,8 @@ async def embed_missing_books(
             count += len(batch_isbn13)
             print(f"✅ FINAL LEFT OVER: Embedded {count} books")
 
-        print(f"✅ Embedded {len(books)} books")
-        return len(books)
+        if count != num_missing:
+            raise ValueError(f"X Expected to embed {num_missing} books, but only embedded {count} books")
+        
+        print(f"✅ Embedded {count} books")
+        return count

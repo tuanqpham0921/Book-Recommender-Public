@@ -12,6 +12,7 @@ from .utils import (
 )
 
 from sqlalchemy import select, func
+from typing import AsyncIterator
 
 class BookStore(BaseStore[BookModel]):
     """SQLAlchemy-based book data access layer."""
@@ -110,18 +111,26 @@ class BookStore(BaseStore[BookModel]):
         
         return books_with_scores
     
-    async def get_missing_embeddings(self) -> List[Dict[str, Any]]:
-        """Get books that are missing embeddings."""
-        
-        stmt = select(
-            BookModel.isbn13,
-            BookModel.title,
-            BookModel.description,
-        ).where(BookModel.embedding.is_(None))
-        
-        result = await self._execute_statement(stmt)
-        rows = result.all()
-        return [row._asdict() for row in rows]
+    
+    async def iter_missing_embeddings(
+        self,
+        *,
+        batch_size: int = 500,
+    ) -> AsyncIterator[dict[str, Any]]:
+        """Stream books missing embeddings."""
+        stmt = (
+            select(
+                BookModel.isbn13,
+                BookModel.title,
+                BookModel.description,
+            )
+            .where(BookModel.embedding.is_(None))
+            .where(BookModel.description.is_not(None))
+            .execution_options(yield_per=batch_size)
+        )
+        result = await self.session.stream(stmt)
+        async for row in result.mappings():
+            yield dict(row)
     
     async def get_num_book_missing_embeddings(self) -> int:
         """Get the number of books that are missing embeddings."""

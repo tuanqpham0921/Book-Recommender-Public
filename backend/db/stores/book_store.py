@@ -8,8 +8,7 @@ from .utils import (
     build_title_search,
     build_isbn_search,
     build_filtered_search,
-    build_embedding_search,
-    compile_sql
+    build_embedding_search
 )
 
 from sqlalchemy import select, func
@@ -19,16 +18,6 @@ class BookStore(BaseStore[BookModel]):
 
     def __init__(self, session: AsyncSession):
         super().__init__(session, BookModel)
-        
-    async def _execute_statement(self, stmt):
-        try:
-            print("------ STMT ------")
-            print(compile_sql(stmt))
-            print("------------------")
-            result = await self.session.execute(stmt)
-            return result
-        except Exception as e:
-            raise e
 
     async def get_by_isbn(self, isbn: str) -> List[Dict[str, Any]]:
         """Get a single book by ISBN-13"""
@@ -132,7 +121,7 @@ class BookStore(BaseStore[BookModel]):
         
         result = await self._execute_statement(stmt)
         rows = result.all()
-        return [dict(row._asdict()) for row in rows]
+        return [row._asdict() for row in rows]
     
     async def get_num_book_missing_embeddings(self) -> int:
         """Get the number of books that are missing embeddings."""

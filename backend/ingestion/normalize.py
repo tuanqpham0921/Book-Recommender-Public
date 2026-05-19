@@ -1,98 +1,65 @@
-""" Normalize the data in the database (making it more consistent and easier to use). """
-from pypinyin import lazy_pinyin
+"""Normalize CSV rows into book records for ingestion."""
 import pandas as pd
+
 from db.schema import BookModel
 
 
-def clean_numeric_value(value):
-    """Clean and convert numeric values, return None if invalid."""
-    if pd.isna(value) or value == "" or value == "nan":
+def normalize_field(value, kind: type = str) -> str | int | float | None:
+    """Normalize a CSV cell to the requested Python type."""
+    if kind is str:
+        if pd.isna(value) or value == "":
+            return ""
+        return str(value)
+
+    if pd.isna(value) or value == "" or (isinstance(value, str) and value == "nan"):
         return None
+
+    if isinstance(value, bool):
+        return None
+
+    if isinstance(value, int):
+        return value if kind is int else float(value)
+
+    if isinstance(value, float):
+        return int(value) if kind is int else value
+
     try:
-        return float(value)
+        number = float(value)
+        return int(number) if kind is int else number
     except (ValueError, TypeError):
         return None
-    
-def apply_normalization(row: pd.Series) -> dict:
-    book_dict = {
-        "isbn13": str(row.get("isbn13")),
-        "isbn10": str(row.get("isbn10")),
-        "title": str(row["title"]),
-        "authors": str(row.get("authors", "")),
-        "categories": str(row.get("categories", "")),
-        "genre": str(row.get("simple_categories", "")),
-        "description": str(row["tagged_description"]),
-        "published_year": (
-            int(clean_numeric_value(row.get("published_year")))
-            if clean_numeric_value(row.get("published_year"))
-            else None
-        ),
-        "average_rating": clean_numeric_value(row.get("average_rating")),
-        "num_pages": (
-            int(clean_numeric_value(row.get("num_pages")))
-            if clean_numeric_value(row.get("num_pages"))
-            else None
-        ),
-        "ratings_count": (
-            int(clean_numeric_value(row.get("ratings_count")))
-            if clean_numeric_value(row.get("ratings_count"))
-            else None
-        ),
-        "thumbnail": str(row.get("thumbnail", "")),
-        "title_and_subtiles": str(row.get("title_and_subtiles", "")),
-    }
-    return book_dict
-    
-def prepare_chunk(chunk: pd.DataFrame) -> list[BookModel]:
-    """Prepare books for embedding and storage."""
-    cleaned_chunk = []
 
-    for idx, row in chunk.iterrows():
-        if pd.notna(row["title"]) and pd.notna(row["description"]):
-            try:
-                book_dict = apply_normalization(row)
-                cleaned_chunk.append(book_dict)
-            except Exception as e:
-                raise ValueError(f"Error preparing chunk: {e}")
+
+def row_to_book(row: pd.Series) -> BookModel:
+    """Map a CSV row to a BookModel (column renames and numeric cleaning)."""
+    return BookModel(
+        isbn13=normalize_field(row.get("isbn13"), str),
+        isbn10=normalize_field(row.get("isbn10"), str),
+        title=normalize_field(row["title"], str),
+        authors=normalize_field(row.get("authors"), str),
+        categories=normalize_field(row.get("categories"), str),
+        genre=normalize_field(row.get("simple_categories"), str),
+        description=normalize_field(row["tagged_description"], str),
+        published_year=normalize_field(row.get("published_year"), int),
+        average_rating=normalize_field(row.get("average_rating"), float),
+        num_pages=normalize_field(row.get("num_pages"), int),
+        ratings_count=normalize_field(row.get("ratings_count"), int),
+        thumbnail=normalize_field(row.get("thumbnail"), str),
+        title_and_subtiles=normalize_field(row.get("title_and_subtiles"), str),
+    )
+
+
+def prepare_chunk(chunk: pd.DataFrame) -> list[dict]:
+    """Prepare a CSV chunk as insert-ready book dicts."""
+    cleaned_chunk: list[dict] = []
+
+    for _, row in chunk.iterrows():
+        if not pd.notna(row.get("title")) or not pd.notna(row.get("tagged_description")):
+            continue
+        try:
+            book = row_to_book(row)
+            cleaned_chunk.append(book.to_dict())
+        except Exception as e:
+            raise ValueError(f"Error preparing chunk: {e}") from e
 
     return cleaned_chunk
-
-
-# -----------------------
-# ----- LEGACY CODE -----
-# Helper functions for changing the author name to a more consistent format
-def romanize_if_needed(name: str) -> str:
-    """Romanize the name if it contains CJK Unified Ideographs."""
-    import re, pykakasi
-    kks = pykakasi.kakasi()
-    
-    if re.search(r"[\u4E00-\u9FFF]", name):
-        # CJK Unified Ideographs
-        converted = kks.convert(name)
-        if converted:
-            return " ".join([item['hepburn'].capitalize() for item in converted])
-        else:
-            return " ".join(lazy_pinyin(name))  
-    
-    return name
-
-def normalize_author(name: str) -> str:
-    """Normalize the author name."""
-    import re, unicodedata
-    
-    name = name.strip()
-    name = unicodedata.normalize("NFKC", name)
-    name = re.sub(r";", " ", name).strip()
-
-    ascii_only = re.sub(r"[^a-zA-Z0-9\s]", " ", name)
-    ascii_only = re.sub(r"\s+", " ", ascii_only).strip()
-
-    return name
-
-    # if ascii_only:
-    #     return ascii_only
-    # romanized = romanize_if_needed(name)
-    # if romanized:
-    #     print(f"Converted '{name}' to '{romanized}'")
-    
-    # return romanized or name

@@ -52,22 +52,9 @@ class BookModel(Base):
     def __repr__(self):
         return f"<BookModel(isbn13='{self.isbn13}', title='{self.title}')>"
 
-    def to_dict(self) -> dict:
-        """Convert model to dictionary."""
-        return {
-            "isbn13": self.isbn13,
-            "isbn10": self.isbn10,
-            "title": self.title,
-            "authors": self.authors,
-            "categories": self.categories,
-            "description": self.description,
-            "published_year": self.published_year,
-            "num_pages": self.num_pages,
-            "average_rating": self.average_rating,
-            "ratings_count": self.ratings_count,
-            "is_children": self.is_children,
-            "genre": self.genre,
-            "thumbnail": self.thumbnail,
-            "large_thumbnail": self.large_thumbnail,
-            "title_and_subtiles": self.title_and_subtiles,
-        }
+    def to_dict(self, *, include_embedding: bool = False) -> dict:
+        """Convert model to dictionary (table columns only)."""
+        columns = BookModel.__table__.columns
+        if not include_embedding:
+            columns = [c for c in columns if c.name != "embedding"]
+        return {column.name: getattr(self, column.name) for column in columns}

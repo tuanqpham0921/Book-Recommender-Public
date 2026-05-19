@@ -20,7 +20,7 @@ dev:
 
 # run the ingestion script
 ingestion:
-	poetry run python ingestion/loader.py
+	poetry run python ingestion/main.py
 
 # clear the pycache
 clean:
